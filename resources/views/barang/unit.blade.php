@@ -1,0 +1,233 @@
+@extends('layouts.app')
+
+@section('title', 'Kelola Unit')
+@section('meta_description', 'Kelola unit aset inventaris Shiro.')
+
+@section('content')
+    <div class="space-y-3">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+                <h1 class="text-base font-semibold text-gray-800 dark:text-gray-100">
+                    Kelola Unit
+                </h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{ $barang->nama }} · {{ $barang->kategori?->nama }}
+                </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <a href="{{ route('barang.show', $barang) }}"
+                    class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
+                    Kembali ke Detail
+                </a>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">Total Unit</p>
+                    <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
+                        {{ $barang->unitBarang()->count() }}
+                    </p>
+                </div>
+
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">Tersedia</p>
+                    <p class="mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                        {{ $barang->unitBarang()->where('status', 'tersedia')->count() }}
+                    </p>
+                </div>
+
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">Dipinjam</p>
+                    <p class="mt-1 text-sm font-semibold text-amber-600 dark:text-amber-400">
+                        {{ $barang->unitBarang()->where('status', 'dipinjam')->count() }}
+                    </p>
+                </div>
+
+                <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400">Rusak</p>
+                    <p class="mt-1 text-sm font-semibold text-red-600 dark:text-red-400">
+                        {{ $barang->unitBarang()->where('status', 'rusak')->count() }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        @if ($unit->count() > 0)
+            <div class="space-y-3">
+                @foreach ($unit as $item)
+                    @php
+                        $warnaProgress = match (true) {
+                            $item->kondisi >= 80 => 'bg-emerald-500',
+                            $item->kondisi >= 60 => 'bg-blue-500',
+                            $item->kondisi >= 35 => 'bg-amber-500',
+                            default => 'bg-red-500',
+                        };
+                    @endphp
+
+                    <div x-data="{
+                        kondisi: {{ old('kondisi', $item->kondisi) }},
+                        loading: false,
+                    
+                        get labelKondisi() {
+                            if (this.kondisi >= 80) return 'Baik';
+                            if (this.kondisi >= 60) return 'Lumayan';
+                            if (this.kondisi >= 35) return 'Rusak';
+                            return 'Rusak Parah';
+                        },
+                    
+                        get warnaKondisiText() {
+                            if (this.kondisi >= 80) return 'text-emerald-600';
+                            if (this.kondisi >= 60) return 'text-blue-600';
+                            if (this.kondisi >= 35) return 'text-amber-600';
+                            return 'text-red-600';
+                        },
+                    
+                        get warnaSlider() {
+                            if (this.kondisi >= 80) return 'accent-color: #059669';
+                            if (this.kondisi >= 60) return 'accent-color: #2563eb';
+                            if (this.kondisi >= 35) return 'accent-color: #f59e0b';
+                            return 'accent-color: #ef4444';
+                        }
+                    }"
+                        class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                        <div class="flex flex-wrap items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                        {{ $item->nomor_unit }}
+                                    </h2>
+                                    <x-kondisi-badge :kondisi="$item->kondisi" />
+                                    <x-status-badge :status="$item->status" />
+                                </div>
+
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Serial: {{ $item->serial_number ?: 'Belum diisi' }}
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-600 dark:text-gray-300">
+                                    {{ $item->kondisi }}%
+                                </span>
+
+                                <div class="w-full max-w-[72px]">
+                                    <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                                        <div class="h-1.5 rounded-full {{ $warnaProgress }}"
+                                            style="width: {{ $item->kondisi }}%; transition: width 0.7s ease-out;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ route('barang.unit.update', [$barang, $item]) }}"
+                            class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2" @submit="loading = true">
+                            @csrf
+                            @method('PATCH')
+
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="serial_number_{{ $item->id }}"
+                                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Serial Number
+                                    </label>
+                                    <input id="serial_number_{{ $item->id }}" name="serial_number" type="text"
+                                        value="{{ old('serial_number', $item->serial_number) }}" maxlength="100"
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                </div>
+
+                                <div>
+                                    <label for="status_{{ $item->id }}"
+                                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Status Operasional
+                                    </label>
+                                    <select id="status_{{ $item->id }}" name="status"
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                        <option value="tersedia" @selected(old('status', $item->status) === 'tersedia')>Tersedia</option>
+                                        <option value="dipinjam" @selected(old('status', $item->status) === 'dipinjam')>Dipinjam</option>
+                                        <option value="rusak" @selected(old('status', $item->status) === 'rusak')>Rusak</option>
+                                        <option value="keluar" @selected(old('status', $item->status) === 'keluar')>Keluar</option>
+                                    </select>
+                                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                        Ini adalah status operasional, terpisah dari kondisi fisik.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label for="catatan_{{ $item->id }}"
+                                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                        Catatan
+                                    </label>
+                                    <textarea id="catatan_{{ $item->id }}" name="catatan" rows="3"
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('catatan', $item->catatan) }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="mb-1 flex items-center justify-between gap-3">
+                                        <label for="kondisi_{{ $item->id }}"
+                                            class="block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                            Kondisi Fisik %
+                                        </label>
+                                        <span class="text-sm font-semibold" :class="warnaKondisiText">
+                                            <span x-text="labelKondisi"></span> <span x-text="kondisi + '%'"></span>
+                                        </span>
+                                    </div>
+
+                                    <input id="kondisi_{{ $item->id }}" name="kondisi" type="range" min="0"
+                                        max="100" x-model="kondisi" :style="warnaSlider" class="block w-full">
+
+                                    <div
+                                        class="mt-2 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                        <span>Rusak Parah 0%</span>
+                                        <span>Rusak 35%</span>
+                                        <span>Lumayan 60%</span>
+                                        <span>Baik 80%</span>
+                                    </div>
+
+                                    <div x-show="kondisi <= 34" x-transition
+                                        class="mt-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-[11px] text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
+                                        Kondisi ≤34% akan otomatis mengubah status unit menjadi <strong>rusak</strong>.
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                                    <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
+                                        Ringkasan Aturan
+                                    </p>
+                                    <ul class="mt-2 space-y-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                        <li>• Kondisi = kondisi fisik unit (0–100%).</li>
+                                        <li>• Status = status operasional unit.</li>
+                                        <li>• Jika kondisi ≤34%, status otomatis rusak saat disimpan.</li>
+                                    </ul>
+                                </div>
+
+                                <div class="flex justify-end gap-2 pt-1">
+                                    <button type="submit" :disabled="loading"
+                                        :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
+                                        class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700">
+                                        <span x-show="!loading">Simpan Perubahan</span>
+                                        <span x-show="loading" class="inline-flex items-center gap-2">
+                                            <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                                            <span>Menyimpan...</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="pt-1">
+                {{ $unit->links('components.pagination') }}
+            </div>
+        @else
+            <x-empty-state icon="bi-cpu" title="Belum ada unit" message="Unit aset belum tersedia untuk barang ini." />
+        @endif
+    </div>
+@endsection
