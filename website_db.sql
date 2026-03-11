@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 10 Mar 2026 pada 19.09
+-- Waktu pembuatan: 11 Mar 2026 pada 23.42
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -87,6 +87,7 @@ CREATE TABLE `detail_peminjaman` (
   `unit_barang_id` bigint(20) UNSIGNED DEFAULT NULL,
   `jumlah` smallint(5) UNSIGNED NOT NULL DEFAULT 1,
   `status_item` enum('dipinjam','dikembalikan') NOT NULL DEFAULT 'dipinjam',
+  `kondisi_awal` tinyint(3) UNSIGNED DEFAULT NULL,
   `waktu_kembali` datetime DEFAULT NULL,
   `kondisi_kembali` tinyint(3) UNSIGNED DEFAULT NULL,
   `catatan_kembali` text DEFAULT NULL,
@@ -163,16 +164,16 @@ CREATE TABLE `jurusan` (
 --
 
 INSERT INTO `jurusan` (`id`, `nama`, `created_at`, `updated_at`) VALUES
-(1, 'RPL 1', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(2, 'RPL 2', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(3, 'TKJ 1', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(4, 'TKJ 2', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(5, 'TEI', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(6, 'ANIMASI 1', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(7, 'ANIMASI 2', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(8, 'TSM 1', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(9, 'TSM 2', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(10, 'TSM 3', '2026-03-10 10:43:52', '2026-03-10 10:43:52');
+(1, 'RPL 1', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(2, 'RPL 2', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(3, 'TKJ 1', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(4, 'TKJ 2', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(5, 'TEI', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(6, 'ANIMASI 1', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(7, 'ANIMASI 2', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(8, 'TSM 1', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(9, 'TSM 2', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(10, 'TSM 3', '2026-03-11 14:54:40', '2026-03-11 14:54:40');
 
 -- --------------------------------------------------------
 
@@ -193,17 +194,17 @@ CREATE TABLE `kategori` (
 --
 
 INSERT INTO `kategori` (`id`, `nama`, `deskripsi`, `created_at`, `updated_at`) VALUES
-(1, 'Laptop', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(2, 'Komputer PC', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(3, 'Proyektor', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(4, 'Printer', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(5, 'Scanner', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(6, 'Kabel & Aksesori', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(7, 'Perangkat Jaringan', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(8, 'Kursi Lab', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(9, 'Meja Lab', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(10, 'Alat Tulis', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(11, 'Perlengkapan Listrik', NULL, '2026-03-10 10:43:52', '2026-03-10 10:43:52');
+(1, 'Laptop', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(2, 'Komputer PC', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(3, 'Proyektor', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(4, 'Printer', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(5, 'Scanner', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(6, 'Kabel & Aksesori', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(7, 'Perangkat Jaringan', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(8, 'Kursi Lab', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(9, 'Meja Lab', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(10, 'Alat Tulis', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(11, 'Perlengkapan Listrik', NULL, '2026-03-11 14:54:40', '2026-03-11 14:54:40');
 
 -- --------------------------------------------------------
 
@@ -223,9 +224,9 @@ CREATE TABLE `kelas` (
 --
 
 INSERT INTO `kelas` (`id`, `nama`, `created_at`, `updated_at`) VALUES
-(1, 'X', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(2, 'XI', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(3, 'XII', '2026-03-10 10:43:52', '2026-03-10 10:43:52');
+(1, 'X', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(2, 'XI', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(3, 'XII', '2026-03-11 14:54:40', '2026-03-11 14:54:40');
 
 -- --------------------------------------------------------
 
@@ -245,11 +246,11 @@ CREATE TABLE `lokasi` (
 --
 
 INSERT INTO `lokasi` (`id`, `nama`, `created_at`, `updated_at`) VALUES
-(1, 'Lab RPS 1', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(2, 'Lab RPS 2', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(3, 'Lab RPS 3', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(4, 'Kantor RPS', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(5, 'Gudang RPS', '2026-03-10 10:43:53', '2026-03-10 10:43:53');
+(1, 'Lab RPS 1', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(2, 'Lab RPS 2', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(3, 'Lab RPS 3', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(4, 'Kantor RPS', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(5, 'Gudang RPS', '2026-03-11 14:54:40', '2026-03-11 14:54:40');
 
 -- --------------------------------------------------------
 
@@ -269,25 +270,25 @@ CREATE TABLE `merek` (
 --
 
 INSERT INTO `merek` (`id`, `nama`, `created_at`, `updated_at`) VALUES
-(1, 'Asus', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(2, 'Acer', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(3, 'Dell', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(4, 'HP', '2026-03-10 10:43:52', '2026-03-10 10:43:52'),
-(5, 'Lenovo', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(6, 'Apple', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(7, 'MSI', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(8, 'Canon', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(9, 'Epson', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(10, 'Brother', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(11, 'Samsung', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(12, 'LG', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(13, 'TP-Link', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(14, 'D-Link', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(15, 'Mikrotik', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(16, 'Logitech', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(17, 'Philips', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(18, 'Sony', '2026-03-10 10:43:53', '2026-03-10 10:43:53'),
-(19, 'Toshiba', '2026-03-10 10:43:53', '2026-03-10 10:43:53');
+(1, 'Asus', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(2, 'Acer', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(3, 'Dell', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(4, 'HP', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(5, 'Lenovo', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(6, 'Apple', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(7, 'MSI', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(8, 'Canon', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(9, 'Epson', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(10, 'Brother', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(11, 'Samsung', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(12, 'LG', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(13, 'TP-Link', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(14, 'D-Link', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(15, 'Mikrotik', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(16, 'Logitech', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(17, 'Philips', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(18, 'Sony', '2026-03-11 14:54:40', '2026-03-11 14:54:40'),
+(19, 'Toshiba', '2026-03-11 14:54:40', '2026-03-11 14:54:40');
 
 -- --------------------------------------------------------
 
@@ -319,7 +320,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (11, '2026_03_08_065115_create_unit_barang_table', 1),
 (12, '2026_03_08_065116_create_peminjaman_table', 1),
 (13, '2026_03_08_065116_create_transaksi_table', 1),
-(14, '2026_03_08_065117_create_detail_peminjaman_table', 1);
+(14, '2026_03_08_065117_create_detail_peminjaman_table', 1),
+(15, '2026_03_11_213440_add_kondisi_awal_to_detail_peminjaman_table', 1);
 
 -- --------------------------------------------------------
 
@@ -365,7 +367,7 @@ CREATE TABLE `pengguna` (
 --
 
 INSERT INTO `pengguna` (`id`, `nama`, `email`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Admin', 'admin@gmail.com', '$2y$12$tMlfdeH30cfx0l2AiFaLtO9ja1Oe.NkvbQqVROFzWQpm5H./bNRrW', NULL, '2026-03-10 10:43:54', '2026-03-10 10:43:54');
+(1, 'Admin', 'admin@gmail.com', '$2y$12$V/zLBMGwObiuHM/iiOExyeba1SERFa57t/CVDsltkQuxNAxiFyaU.', NULL, '2026-03-11 14:54:41', '2026-03-11 14:54:41');
 
 -- --------------------------------------------------------
 
@@ -387,7 +389,8 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('Fgqd0aDKc9XBJm96KWzZIBRIJRpc7JlbZ1Tj5GGs', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoibnVxMXhqN0Nyb0lSTEN3dTFQTmh1TEY4d21nR1dIZEZOdzBJSkZ1SSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1773166062);
+('mHrJaTzgbsI5DGseo0XIYva23vR9kpii7uRSiN9x', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoib2dNS09RcXY2Ums0UzRNZ216N1pMYjFaVVJaeGJnNjFOS3F0cE1MUCI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC90cmFuc2Frc2kvbWFzdWsiO3M6NToicm91dGUiO3M6MTU6InRyYW5zYWtzaS5tYXN1ayI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6MzoidXJsIjthOjA6e31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1773268909),
+('TnR2wSCIvsI1z0l4YrHlFPQ5fPMKZG6jfrnnN1PG', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiR0lkdjJSOHc1TGZ4RVhLc0ZwWWlTYzl0UU8xVUgxc2RKTWttZnN3SCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJuZXciO2E6MDp7fXM6Mzoib2xkIjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1773266685);
 
 -- --------------------------------------------------------
 
@@ -638,7 +641,7 @@ ALTER TABLE `merek`
 -- AUTO_INCREMENT untuk tabel `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT untuk tabel `peminjaman`
