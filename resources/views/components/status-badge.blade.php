@@ -3,7 +3,7 @@
 ])
 
 @php
-    $status = strtolower((string) $status);
+    $status = strtolower(trim((string) $status));
 
     [$label, $class] = match ($status) {
         'tersedia' => [
@@ -32,7 +32,7 @@
 
 <span
     {{ $attributes->merge([
-        'class' => "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 {$class}",
+        'class' => "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ring-1 {$class}",
     ]) }}>
     {{ $label }}
 </span>

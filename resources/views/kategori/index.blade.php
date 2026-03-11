@@ -11,7 +11,7 @@
                     Kategori
                 </h1>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Kelola kategori barang inventaris Rpl.
+                    Kelola kategori barang inventaris RPL.
                 </p>
             </div>
 
@@ -72,11 +72,9 @@
                                     </td>
 
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
-                                                {{ $item->nama }}
-                                            </p>
-                                        </div>
+                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                            {{ $item->nama }}
+                                        </p>
                                     </td>
 
                                     <td
@@ -188,10 +186,10 @@
                 <input type="hidden" name="_form" value="tambah-kategori">
 
                 <div>
-                    <label for="nama" class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <label for="nama-tambah" class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                         Nama Kategori
                     </label>
-                    <input id="nama" name="nama" type="text"
+                    <input id="nama-tambah" name="nama" type="text"
                         value="{{ old('_form') === 'tambah-kategori' ? old('nama') : '' }}" required maxlength="100"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     @if (old('_form') === 'tambah-kategori')
@@ -202,10 +200,10 @@
                 </div>
 
                 <div>
-                    <label for="deskripsi" class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                    <label for="deskripsi-tambah" class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                         Deskripsi
                     </label>
-                    <textarea id="deskripsi" name="deskripsi" rows="3"
+                    <textarea id="deskripsi-tambah" name="deskripsi" rows="3"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('_form') === 'tambah-kategori' ? old('deskripsi') : '' }}</textarea>
                     @if (old('_form') === 'tambah-kategori')
                         @error('deskripsi')

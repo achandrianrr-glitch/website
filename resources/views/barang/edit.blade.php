@@ -139,15 +139,20 @@
                                 class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 <option value="">Pilih merek</option>
                                 @foreach ($merek as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                    <option value="{{ $item->id }}" @selected((string) old('merek_id', $barang->merek_id) === (string) $item->id)>
+                                        {{ $item->nama }}
+                                    </option>
                                 @endforeach
-                                <option value="lainnya">Lainnya</option>
+                                <option value="lainnya" @selected(old('merek_id', $barang->merek_manual ? 'lainnya' : '') === 'lainnya')>
+                                    Lainnya
+                                </option>
                             </select>
+
                             @error('merek_id')
                                 <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
 
-                            <div x-show="merekId === 'lainnya'" x-transition class="mt-2">
+                            <div x-cloak x-show="merekId === 'lainnya'" x-transition class="mt-2">
                                 <input name="merek_manual" type="text"
                                     value="{{ old('merek_manual', $barang->merek_manual) }}"
                                     placeholder="Masukkan merek manual"
@@ -166,15 +171,20 @@
                                 class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 <option value="">Pilih lokasi</option>
                                 @foreach ($lokasi as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                    <option value="{{ $item->id }}" @selected((string) old('lokasi_id', $barang->lokasi_id) === (string) $item->id)>
+                                        {{ $item->nama }}
+                                    </option>
                                 @endforeach
-                                <option value="lainnya">Lainnya</option>
+                                <option value="lainnya" @selected(old('lokasi_id', $barang->lokasi_manual ? 'lainnya' : '') === 'lainnya')>
+                                    Lainnya
+                                </option>
                             </select>
+
                             @error('lokasi_id')
                                 <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
 
-                            <div x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
+                            <div x-cloak x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
                                 <input name="lokasi_manual" type="text"
                                     value="{{ old('lokasi_manual', $barang->lokasi_manual) }}"
                                     placeholder="Masukkan lokasi manual"
@@ -218,6 +228,7 @@
                                 <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
                                     Informasi Unit Aset
                                 </p>
+
                                 <div class="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-gray-400">
                                     <p>
                                         Total Unit:
@@ -233,12 +244,13 @@
                                         </a>
                                     </p>
                                 </div>
+
                                 <p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
                                     Penambahan, perubahan kondisi, dan status per unit dilakukan di halaman kelola unit.
                                 </p>
                             </div>
 
-                            <input type="hidden" name="kondisi_awal" value="100">
+                            <input type="hidden" name="kondisi_awal" value="{{ old('kondisi_awal', 100) }}">
                         @endif
 
                         @if ($barang->tipe === 'stok')
@@ -254,20 +266,34 @@
                                     Jumlah total stok dapat diperbarui, tetapi tidak boleh lebih kecil dari total stok yang
                                     sudah dipinjam, rusak, atau keluar.
                                 </p>
+
                                 <div class="mt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                                    <p>Dipinjam: <span
-                                            class="font-medium text-gray-700 dark:text-gray-200">{{ (int) $barang->qty_dipinjam }}</span>
+                                    <p>
+                                        Dipinjam:
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                                            {{ (int) $barang->qty_dipinjam }}
+                                        </span>
                                     </p>
-                                    <p>Rusak: <span
-                                            class="font-medium text-gray-700 dark:text-gray-200">{{ (int) $barang->qty_rusak }}</span>
+                                    <p>
+                                        Rusak:
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                                            {{ (int) $barang->qty_rusak }}
+                                        </span>
                                     </p>
-                                    <p>Keluar: <span
-                                            class="font-medium text-gray-700 dark:text-gray-200">{{ (int) $barang->qty_keluar }}</span>
+                                    <p>
+                                        Keluar:
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                                            {{ (int) $barang->qty_keluar }}
+                                        </span>
                                     </p>
-                                    <p>Minimum total: <span
-                                            class="font-medium text-gray-700 dark:text-gray-200">{{ $qtyTerpakai }}</span>
+                                    <p>
+                                        Minimum total:
+                                        <span class="font-medium text-gray-700 dark:text-gray-200">
+                                            {{ $qtyTerpakai }}
+                                        </span>
                                     </p>
                                 </div>
+
                                 @error('qty_total')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror

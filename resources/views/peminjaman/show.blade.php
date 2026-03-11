@@ -63,9 +63,23 @@
                 </div>
 
                 <div>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Waktu Pinjam</p>
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {{ $peminjaman->waktu_pinjam ? \Illuminate\Support\Carbon::parse($peminjaman->waktu_pinjam)->format('H:i') : '—' }}
+                    </p>
+                </div>
+
+                <div>
                     <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">No. HP</p>
                     <p class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">
                         {{ $peminjaman->no_hp ?: '—' }}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Admin</p>
+                    <p class="mt-1 text-sm font-medium text-gray-800 dark:text-gray-100">
+                        {{ $peminjaman->pengguna?->nama ?? 'Form Siswa Publik' }}
                     </p>
                 </div>
             </div>
@@ -142,6 +156,10 @@
                                 $initialKondisi = $modalShouldOpen
                                     ? (int) old('kondisi_kembali', $kondisiAwal ?? 100)
                                     : $kondisiAwal ?? 100;
+
+                                $waktuKembaliLabel = $detail->waktu_kembali
+                                    ? \Illuminate\Support\Carbon::parse($detail->waktu_kembali)->format('d M Y H:i')
+                                    : '—';
                             @endphp
 
                             <tr
@@ -178,7 +196,7 @@
 
                                 <td
                                     class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    {{ $detail->waktu_kembali ? \Illuminate\Support\Carbon::parse($detail->waktu_kembali)->format('d M Y H:i') : '—' }}
+                                    {{ $waktuKembaliLabel }}
                                 </td>
 
                                 <td class="border-b border-gray-100 px-3 py-2 text-right dark:border-gray-700">
@@ -186,17 +204,27 @@
                                         <div x-data="{
                                             open: @js($modalShouldOpen),
                                             kondisi: {{ $initialKondisi }},
+                                            loading: false,
+                                        
                                             get labelKondisi() {
                                                 if (this.kondisi >= 80) return 'Baik';
                                                 if (this.kondisi >= 60) return 'Lumayan';
                                                 if (this.kondisi >= 35) return 'Rusak';
                                                 return 'Rusak Parah';
                                             },
+                                        
                                             get warnaKondisiText() {
                                                 if (this.kondisi >= 80) return 'text-emerald-600';
                                                 if (this.kondisi >= 60) return 'text-blue-600';
                                                 if (this.kondisi >= 35) return 'text-amber-600';
                                                 return 'text-red-600';
+                                            },
+                                        
+                                            get warnaSlider() {
+                                                if (this.kondisi >= 80) return 'accent-color: #059669';
+                                                if (this.kondisi >= 60) return 'accent-color: #2563eb';
+                                                if (this.kondisi >= 35) return 'accent-color: #f59e0b';
+                                                return 'accent-color: #ef4444';
                                             }
                                         }">
                                             <button type="button"
@@ -206,10 +234,10 @@
                                                 <span>Kembalikan</span>
                                             </button>
 
-                                            <x-modal name="open" title="Proses Pengembalian" max-width="max-w-lg">
+                                            <x-modal1 name="open" title="Proses Pengembalian" max-width="max-w-lg">
                                                 <form method="POST"
                                                     action="{{ route('peminjaman.kembalikan', $peminjaman) }}"
-                                                    class="space-y-3">
+                                                    class="space-y-3" @submit="loading = true">
                                                     @csrf
                                                     @method('PATCH')
 
@@ -238,9 +266,18 @@
                                                         </div>
 
                                                         <input name="kondisi_kembali" type="range" min="0"
-                                                            max="100" x-model="kondisi" class="block w-full">
+                                                            max="100" x-model="kondisi" :style="warnaSlider"
+                                                            class="block w-full">
 
-                                                        <div x-show="kondisi <= 34" x-transition
+                                                        <div
+                                                            class="mt-2 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                                            <span>Rusak Parah 0%</span>
+                                                            <span>Rusak 35%</span>
+                                                            <span>Lumayan 60%</span>
+                                                            <span>Baik 80%</span>
+                                                        </div>
+
+                                                        <div x-cloak x-show="kondisi <= 34" x-transition
                                                             class="mt-2 text-xs text-red-600 dark:text-red-400">
                                                             Kondisi ≤34% akan otomatis mengubah status unit menjadi rusak.
                                                         </div>
@@ -248,7 +285,8 @@
                                                         @if ($modalShouldOpen)
                                                             @error('kondisi_kembali')
                                                                 <p class="mt-2 text-[11px] text-red-600 dark:text-red-400">
-                                                                    {{ $message }}</p>
+                                                                    {{ $message }}
+                                                                </p>
                                                             @enderror
                                                         @endif
                                                     </div>
@@ -264,7 +302,8 @@
                                                         @if ($modalShouldOpen)
                                                             @error('catatan_kembali')
                                                                 <p class="mt-2 text-[11px] text-red-600 dark:text-red-400">
-                                                                    {{ $message }}</p>
+                                                                    {{ $message }}
+                                                                </p>
                                                             @enderror
                                                         @endif
                                                     </div>
@@ -272,17 +311,22 @@
                                                     <div class="flex justify-end gap-2">
                                                         <button type="button"
                                                             class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                                                            @click="open = false">
+                                                            @click="open = false" :disabled="loading">
                                                             Batal
                                                         </button>
 
-                                                        <button type="submit"
-                                                            class="rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white hover:bg-teal-700">
-                                                            Simpan Pengembalian
+                                                        <button type="submit" :disabled="loading"
+                                                            :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
+                                                            class="inline-flex items-center gap-2 rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white hover:bg-teal-700">
+                                                            <span x-show="!loading">Simpan Pengembalian</span>
+                                                            <span x-show="loading" class="inline-flex items-center gap-2">
+                                                                <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                                                                <span>Menyimpan...</span>
+                                                            </span>
                                                         </button>
                                                     </div>
                                                 </form>
-                                            </x-modal>
+                                            </x-modal1>
                                         </div>
                                     @else
                                         <span class="text-sm text-gray-400 dark:text-gray-500">—</span>

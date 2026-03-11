@@ -15,16 +15,21 @@
             ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-400'
             : 'bg-gray-100 text-gray-600 ring-gray-400/20 dark:bg-gray-700 dark:text-gray-300';
 
-        $rataKondisiAset = $isAset
+        $kondisiBarang = $isAset
             ? (int) round((float) $barang->unitBarang->avg('kondisi'))
             : (int) ($barang->kondisi_stok ?? 100);
 
         $progressColor = match (true) {
-            $rataKondisiAset >= 80 => 'bg-emerald-500',
-            $rataKondisiAset >= 60 => 'bg-blue-500',
-            $rataKondisiAset >= 35 => 'bg-amber-500',
+            $kondisiBarang >= 80 => 'bg-emerald-500',
+            $kondisiBarang >= 60 => 'bg-blue-500',
+            $kondisiBarang >= 35 => 'bg-amber-500',
             default => 'bg-red-500',
         };
+
+        $persenTersedia =
+            !$isAset && (int) $barang->qty_total > 0
+                ? (int) round(((int) $barang->qty_tersedia / (int) $barang->qty_total) * 100)
+                : 0;
     @endphp
 
     <div class="space-y-3">
@@ -120,6 +125,7 @@
                     <p class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">
                         Spesifikasi
                     </p>
+
                     <div class="rounded-lg bg-gray-50 p-2.5 text-sm text-gray-700 dark:bg-gray-700/50 dark:text-gray-200">
                         {{ $barang->spesifikasi ?: 'Tidak ada spesifikasi.' }}
                     </div>
@@ -273,13 +279,6 @@
                                 <span>{{ (int) $barang->qty_tersedia }} / {{ (int) $barang->qty_total }}</span>
                             </div>
 
-                            @php
-                                $persenTersedia =
-                                    ((int) $barang->qty_total) > 0
-                                        ? (int) round(((int) $barang->qty_tersedia / (int) $barang->qty_total) * 100)
-                                        : 0;
-                            @endphp
-
                             <div class="h-2 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
                                 <div class="h-2 rounded-full bg-blue-500"
                                     style="width: {{ $persenTersedia }}%; transition: width 0.7s ease-out;"></div>
@@ -291,35 +290,40 @@
                                 class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Total</p>
                                 <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                                    {{ (int) $barang->qty_total }}</p>
+                                    {{ (int) $barang->qty_total }}
+                                </p>
                             </div>
 
                             <div
                                 class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Tersedia</p>
                                 <p class="mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                                    {{ (int) $barang->qty_tersedia }}</p>
+                                    {{ (int) $barang->qty_tersedia }}
+                                </p>
                             </div>
 
                             <div
                                 class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Dipinjam</p>
                                 <p class="mt-1 text-sm font-semibold text-amber-600 dark:text-amber-400">
-                                    {{ (int) $barang->qty_dipinjam }}</p>
+                                    {{ (int) $barang->qty_dipinjam }}
+                                </p>
                             </div>
 
                             <div
                                 class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Rusak</p>
                                 <p class="mt-1 text-sm font-semibold text-red-600 dark:text-red-400">
-                                    {{ (int) $barang->qty_rusak }}</p>
+                                    {{ (int) $barang->qty_rusak }}
+                                </p>
                             </div>
 
                             <div
                                 class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                                 <p class="text-[11px] text-gray-500 dark:text-gray-400">Keluar</p>
                                 <p class="mt-1 text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                    {{ (int) $barang->qty_keluar }}</p>
+                                    {{ (int) $barang->qty_keluar }}
+                                </p>
                             </div>
                         </div>
 
@@ -377,7 +381,7 @@
                 </div>
             </div>
 
-            <div x-show="tab === 'transaksi'" x-transition>
+            <div x-cloak x-show="tab === 'transaksi'" x-transition>
                 @if ($riwayatTransaksi->isEmpty())
                     <x-empty-state icon="bi-arrow-left-right" title="Belum ada transaksi"
                         message="Riwayat transaksi barang akan muncul di sini." />
@@ -415,6 +419,17 @@
                                             $trx->jenis === 'masuk'
                                                 ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-400'
                                                 : 'bg-gray-100 text-gray-600 ring-gray-400/20 dark:bg-gray-700 dark:text-gray-300';
+
+                                        $keteranganTransaksi =
+                                            $trx->jenis === 'keluar'
+                                                ? ($trx->alasan_keluar
+                                                    ? str_replace('_', ' ', $trx->alasan_keluar)
+                                                    : 'Keluar')
+                                                : 'Barang masuk';
+
+                                        if ($trx->unitBarang) {
+                                            $keteranganTransaksi .= ' · ' . $trx->unitBarang->nomor_unit;
+                                        }
                                     @endphp
 
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
@@ -422,30 +437,24 @@
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
                                             {{ optional($trx->tanggal_transaksi)->format('d M Y') }}
                                         </td>
+
                                         <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                             <span
                                                 class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 {{ $badgeJenis }}">
                                                 {{ ucfirst($trx->jenis) }}
                                             </span>
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
                                             {{ $trx->jumlah }}
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                            @if ($trx->jenis === 'keluar')
-                                                {{ $trx->alasan_keluar ? str_replace('_', ' ', $trx->alasan_keluar) : 'Keluar' }}
-                                                @if ($trx->unitBarang)
-                                                    · {{ $trx->unitBarang->nomor_unit }}
-                                                @endif
-                                            @else
-                                                Barang masuk
-                                                @if ($trx->unitBarang)
-                                                    · {{ $trx->unitBarang->nomor_unit }}
-                                                @endif
-                                            @endif
+                                            {{ $keteranganTransaksi }}
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                                             {{ $trx->pengguna?->nama ?? '-' }}
@@ -458,7 +467,7 @@
                 @endif
             </div>
 
-            <div x-show="tab === 'peminjaman'" x-transition>
+            <div x-cloak x-show="tab === 'peminjaman'" x-transition>
                 @if ($riwayatPeminjaman->isEmpty())
                     <x-empty-state icon="bi-people" title="Belum ada riwayat peminjaman"
                         message="Riwayat peminjaman barang akan muncul di sini." />
@@ -496,18 +505,22 @@
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
                                             {{ optional($detail->peminjaman?->tanggal_pinjam)->format('d M Y') }}
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:text-gray-100">
                                             {{ $detail->peminjaman?->kode_pinjam ?? '-' }}
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                                             {{ $detail->peminjaman?->nama_peminjam ?? '-' }}
                                         </td>
+
                                         <td
                                             class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                                             {{ $detail->unitBarang?->nomor_unit ?? 'Qty ' . $detail->jumlah }}
                                         </td>
+
                                         <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                             <x-status-badge :status="$detail->status_item" />
                                         </td>

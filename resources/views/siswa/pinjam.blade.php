@@ -7,7 +7,7 @@
     @php
         $hasilKode = session('hasil_kode');
         $hasilSukses = session('peminjaman_sukses');
-        $tabAktif = session('tab_aktif', 'peminjaman');
+        $tabAktif = session('tab_aktif', old('tab_aktif', 'peminjaman'));
 
         $kelasData = $kelas
             ->map(
@@ -16,7 +16,8 @@
                     'nama' => $item->nama,
                 ],
             )
-            ->values();
+            ->values()
+            ->all();
 
         $jurusanData = $jurusan
             ->map(
@@ -25,7 +26,8 @@
                     'nama' => $item->nama,
                 ],
             )
-            ->values();
+            ->values()
+            ->all();
 
         $oldItems = [];
         $oldItemsJson = old('items_json');
@@ -79,6 +81,22 @@
             if (!this.kelasId) {
                 this.jurusanId = '';
             }
+    
+            this.normalisasiCart();
+        },
+    
+        normalisasiCart() {
+            this.cart = this.cart.map((item) => ({
+                barang_id: Number(item.barang_id),
+                nama: item.nama || '',
+                tipe: item.tipe || 'aset',
+                jumlah: Math.max(1, Number(item.jumlah || 1)),
+                max: Math.max(1, Number(item.max || 1)),
+                unit_tersedia: item.unit_tersedia ?? null,
+                qty_tersedia: item.qty_tersedia ?? null,
+                label_kondisi: item.label_kondisi || 'Baik',
+                kondisi: Number(item.kondisi ?? 100),
+            }));
         },
     
         async cariBarang() {
@@ -91,11 +109,11 @@
                 }
     
                 try {
-                    const response = await fetch(`/pinjam/cari-barang?q=${encodeURIComponent(this.search)}`, {
+                    const response = await fetch(`{{ route('siswa.cari-barang') }}?q=${encodeURIComponent(this.search)}`, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
-                        }
+                        },
                     });
     
                     if (!response.ok) {
@@ -103,7 +121,8 @@
                         return;
                     }
     
-                    this.results = await response.json();
+                    const data = await response.json();
+                    this.results = Array.isArray(data) ? data : [];
                 } catch (error) {
                     this.results = [];
                 }
@@ -111,11 +130,14 @@
         },
     
         tambahKeDaftar(item) {
-            const existingIndex = this.cart.findIndex((cartItem) => Number(cartItem.barang_id) === Number(item.id));
+            const existingIndex = this.cart.findIndex(
+                (cartItem) => Number(cartItem.barang_id) === Number(item.id)
+            );
     
             if (existingIndex !== -1) {
                 if (item.tipe === 'aset') {
-                    this.cart[existingIndex].jumlah = Number(this.cart[existingIndex].jumlah || 1) + 1;
+                    const jumlahBaru = Number(this.cart[existingIndex].jumlah || 1) + 1;
+                    this.cart[existingIndex].jumlah = Math.min(jumlahBaru, Number(this.cart[existingIndex].max || 1));
                 } else {
                     const jumlahBaru = Number(this.cart[existingIndex].jumlah || 1) + 1;
                     this.cart[existingIndex].jumlah = Math.min(jumlahBaru, Number(this.cart[existingIndex].max || 1));
@@ -132,11 +154,10 @@
                 tipe: item.tipe,
                 jumlah: 1,
                 max: item.tipe === 'stok' ?
-                    Number(item.qty_tersedia || 1) :
-                    Number(item.unit_tersedia || 1),
+                    Number(item.qty_tersedia || 1) : Number(item.unit_tersedia || 1),
                 unit_tersedia: item.unit_tersedia ?? null,
                 qty_tersedia: item.qty_tersedia ?? null,
-                label_kondisi: item.label_kondisi,
+                label_kondisi: item.label_kondisi || 'Baik',
                 kondisi: Number(item.kondisi || 100),
             });
     
@@ -152,6 +173,20 @@
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(kode);
             }
+        },
+    
+        warnaKondisiText(nilai) {
+            if (nilai >= 80) return 'text-emerald-600 dark:text-emerald-400';
+            if (nilai >= 60) return 'text-blue-600 dark:text-blue-400';
+            if (nilai >= 35) return 'text-amber-600 dark:text-amber-400';
+            return 'text-red-600 dark:text-red-400';
+        },
+    
+        labelKondisi(nilai) {
+            if (nilai >= 80) return 'Baik';
+            if (nilai >= 60) return 'Lumayan';
+            if (nilai >= 35) return 'Rusak';
+            return 'Rusak Parah';
         }
     }" class="min-h-screen">
         <header class="sticky top-0 z-20 h-12 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -165,7 +200,8 @@
 
                 <button type="button"
                     class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                    @click="toggleDark()" :title="isDark ? 'Ubah ke mode terang' : 'Ubah ke mode gelap'">
+                    @click="toggleDark()" :title="isDark ? 'Ubah ke mode terang' : 'Ubah ke mode gelap'"
+                    :aria-label="isDark ? 'Ubah ke mode terang' : 'Ubah ke mode gelap'">
                     <i class="bi text-sm" :class="isDark ? 'bi-sun' : 'bi-moon'"></i>
                 </button>
             </div>
@@ -198,9 +234,9 @@
                 <div x-cloak x-show="tab === 'peminjaman'" x-transition class="space-y-4">
                     @if ($hasilSukses)
                         <div
-                            class="mx-auto max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-md animate-slide-up dark:border-gray-700 dark:bg-gray-800">
+                            class="mx-auto max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-md dark:border-gray-700 dark:bg-gray-800">
                             <div class="text-center">
-                                <i class="bi bi-check-circle-fill text-4xl text-emerald-500"></i>
+                                <i class="bi bi-check-circle-fill animate-slide-up text-4xl text-emerald-500"></i>
 
                                 <h2 class="mt-3 text-base font-bold text-gray-800 dark:text-gray-100">
                                     Peminjaman Berhasil!
@@ -209,7 +245,7 @@
                                 <div
                                     class="mx-auto mt-4 inline-flex rounded-xl border border-blue-200 px-4 py-3 animate-pulse-ring dark:border-blue-800/40">
                                     <span class="font-mono text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                        {{ $hasilSukses['kode_pinjam'] }}
+                                        {{ $hasilSukses['kode_pinjam'] ?? '-' }}
                                     </span>
                                 </div>
 
@@ -220,7 +256,7 @@
                                 <div class="mt-4 flex justify-center gap-2">
                                     <button type="button"
                                         class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700"
-                                        @click="salinKode(@js($hasilSukses['kode_pinjam']))">
+                                        @click="salinKode(@js($hasilSukses['kode_pinjam'] ?? ''))">
                                         <i class="bi bi-clipboard"></i>
                                         <span>Salin Kode</span>
                                     </button>
@@ -234,10 +270,10 @@
                                 </div>
 
                                 <div class="mt-4 space-y-2 text-left">
-                                    @foreach ($hasilSukses['items'] as $item)
+                                    @foreach ($hasilSukses['items'] ?? [] as $item)
                                         <div
                                             class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-200">
-                                            {{ $item['barang'] }} — {{ $item['unit_qty'] }}
+                                            {{ $item['barang'] ?? '-' }} — {{ $item['unit_qty'] ?? '-' }}
                                         </div>
                                     @endforeach
                                 </div>
@@ -302,7 +338,7 @@
                                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                         <option value="">Pilih jurusan</option>
                                         <template x-for="item in jurusanFiltered" :key="item.id">
-                                            <option :value="item.id" x-text="item.nama"></option>
+                                            <option :value="String(item.id)" x-text="item.nama"></option>
                                         </template>
                                     </select>
                                     @error('jurusan_id')
@@ -444,24 +480,26 @@
 
                                                     <button type="button"
                                                         class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-sm text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                                                        @click="hapusItem(index)" title="Hapus dari daftar">
+                                                        @click="hapusItem(index)" title="Hapus dari daftar"
+                                                        aria-label="Hapus dari daftar">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
 
-                                                <div class="mt-3" x-show="item.tipe === 'aset'">
+                                                <div class="mt-3" x-cloak x-show="item.tipe === 'aset'">
                                                     <p class="text-xs text-blue-600 dark:text-blue-400">
                                                         Unit terbaik tersedia akan dipilih otomatis.
                                                     </p>
                                                 </div>
 
-                                                <div class="mt-3" x-show="item.tipe === 'stok'">
+                                                <div class="mt-3" x-cloak x-show="item.tipe === 'stok'">
                                                     <label
                                                         class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                                         Jumlah
                                                     </label>
                                                     <input type="number" min="1" :max="item.max"
                                                         x-model.number="item.jumlah"
+                                                        @input="item.jumlah = Math.max(1, Math.min(Number(item.jumlah || 1), Number(item.max || 1)))"
                                                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                                     <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                                                         Maksimal <span x-text="item.max"></span>.
@@ -492,6 +530,7 @@
                     <form method="POST" action="{{ route('siswa.cek-kode') }}"
                         class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                         @csrf
+                        <input type="hidden" name="tab_aktif" value="pengembalian">
 
                         <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
                             <div>
@@ -525,67 +564,127 @@
                         <div
                             class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/10">
                             <p class="text-sm font-semibold text-blue-800 dark:text-blue-300">
-                                {{ $hasilKode['kode_pinjam'] }}
+                                {{ $hasilKode['kode_pinjam'] ?? '-' }}
                             </p>
                             <p class="mt-1 text-xs text-blue-700 dark:text-blue-400">
-                                {{ $hasilKode['nama_peminjam'] }} · {{ $hasilKode['kelas'] }} /
-                                {{ $hasilKode['jurusan'] }} · {{ $hasilKode['tanggal_pinjam'] }}
+                                {{ $hasilKode['nama_peminjam'] ?? '-' }} · {{ $hasilKode['kelas'] ?? '-' }} /
+                                {{ $hasilKode['jurusan'] ?? '-' }} · {{ $hasilKode['tanggal_pinjam'] ?? '-' }}
                             </p>
                         </div>
 
                         <div class="space-y-3">
-                            @foreach ($hasilKode['items'] as $item)
+                            @foreach ($hasilKode['items'] ?? [] as $item)
                                 @php
+                                    $detailId = $item['detail_id'] ?? null;
+                                    $statusItem = $item['status_item'] ?? 'dipinjam';
+                                    $kondisiAwal = isset($item['kondisi_awal']) ? (int) $item['kondisi_awal'] : null;
+                                    $kondisiKembali = isset($item['kondisi_kembali'])
+                                        ? (int) $item['kondisi_kembali']
+                                        : null;
+
                                     $labelKondisiAwal = match (true) {
-                                        ($item['kondisi_awal'] ?? null) >= 80 => 'Baik',
-                                        ($item['kondisi_awal'] ?? null) >= 60 => 'Lumayan',
-                                        ($item['kondisi_awal'] ?? null) >= 35 => 'Rusak',
-                                        default => 'Rusak Parah',
+                                        !is_null($kondisiAwal) && $kondisiAwal >= 80 => 'Baik',
+                                        !is_null($kondisiAwal) && $kondisiAwal >= 60 => 'Lumayan',
+                                        !is_null($kondisiAwal) && $kondisiAwal >= 35 => 'Rusak',
+                                        !is_null($kondisiAwal) => 'Rusak Parah',
+                                        default => null,
                                     };
+
+                                    $modalShouldOpen =
+                                        old('detail_id') && (string) old('detail_id') === (string) $detailId;
+                                    $initialKondisi = $modalShouldOpen
+                                        ? (int) old('kondisi_kembali', $kondisiAwal ?? 100)
+                                        : $kondisiAwal ?? 100;
+
+                                    $waktuKembali = $item['waktu_kembali'] ?? null;
+                                    $catatanKembali = $item['catatan_kembali'] ?? null;
                                 @endphp
 
                                 <div
-                                    class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
+                                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                                     <div class="flex flex-wrap items-start justify-between gap-3">
                                         <div class="min-w-0">
-                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
-                                                {{ $item['barang'] }}
+                                            <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+                                                {{ $item['barang'] ?? '-' }}
                                             </p>
                                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                {{ $item['unit_qty'] }}
+                                                {{ $item['unit_qty'] ?? '-' }}
                                             </p>
                                         </div>
 
-                                        <x-status-badge :status="$item['status_item']" />
+                                        <x-status-badge :status="$statusItem" />
                                     </div>
 
-                                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                                        @if (!is_null($item['kondisi_awal']))
-                                            Kondisi awal: {{ $labelKondisiAwal }} {{ $item['kondisi_awal'] }}%
-                                        @endif
+                                    <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                                        <div>
+                                            <p
+                                                class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                Kondisi Awal
+                                            </p>
+                                            <div class="mt-1">
+                                                @if (!is_null($kondisiAwal))
+                                                    <span
+                                                        class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 {{ match (true) {
+                                                            $kondisiAwal >= 80
+                                                                => 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-400',
+                                                            $kondisiAwal >= 60 => 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/20 dark:text-blue-400',
+                                                            $kondisiAwal >= 35 => 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400',
+                                                            default => 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-900/20 dark:text-red-400',
+                                                        } }}">
+                                                        {{ $labelKondisiAwal }} {{ $kondisiAwal }}%
+                                                    </span>
+                                                @else
+                                                    <span class="text-sm text-gray-400 dark:text-gray-500">—</span>
+                                                @endif
+                                            </div>
+                                        </div>
 
-                                        @if (!is_null($item['kondisi_kembali']))
-                                            <span class="mx-1">·</span>
-                                            Kondisi kembali: {{ $item['kondisi_kembali'] }}%
-                                        @endif
+                                        <div>
+                                            <p
+                                                class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                Kondisi Kembali
+                                            </p>
+                                            <div class="mt-1">
+                                                @if (!is_null($kondisiKembali))
+                                                    <x-kondisi-badge :kondisi="$kondisiKembali" :show-value="true" />
+                                                @else
+                                                    <span class="text-sm text-gray-400 dark:text-gray-500">Belum
+                                                        dikembalikan</span>
+                                                @endif
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <p
+                                                class="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                                Waktu
+                                            </p>
+                                            <p class="mt-1 text-sm text-gray-700 dark:text-gray-200">
+                                                {{ $waktuKembali ?: '—' }}
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    @if ($item['status_item'] === 'dipinjam')
+                                    @if ($statusItem === 'dipinjam' && $detailId)
                                         <div x-data="{
-                                            open: false,
-                                            kondisi: {{ is_numeric($item['kondisi_awal'] ?? null) ? (int) $item['kondisi_awal'] : 100 }},
+                                            open: @js($modalShouldOpen),
+                                            kondisi: {{ $initialKondisi }},
+                                            loading: false,
+                                        
                                             get labelKondisi() {
                                                 if (this.kondisi >= 80) return 'Baik';
                                                 if (this.kondisi >= 60) return 'Lumayan';
                                                 if (this.kondisi >= 35) return 'Rusak';
                                                 return 'Rusak Parah';
                                             },
+                                        
                                             get warnaKondisiText() {
-                                                if (this.kondisi >= 80) return 'text-emerald-600';
-                                                if (this.kondisi >= 60) return 'text-blue-600';
-                                                if (this.kondisi >= 35) return 'text-amber-600';
-                                                return 'text-red-600';
+                                                if (this.kondisi >= 80) return 'text-emerald-600 dark:text-emerald-400';
+                                                if (this.kondisi >= 60) return 'text-blue-600 dark:text-blue-400';
+                                                if (this.kondisi >= 35) return 'text-amber-600 dark:text-amber-400';
+                                                return 'text-red-600 dark:text-red-400';
                                             },
+                                        
                                             get warnaSlider() {
                                                 if (this.kondisi >= 80) return 'accent-color: #059669';
                                                 if (this.kondisi >= 60) return 'accent-color: #2563eb';
@@ -595,24 +694,29 @@
                                         }" class="mt-3">
                                             <button type="button"
                                                 class="inline-flex items-center gap-2 rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white hover:bg-teal-700"
-                                                @click="open = !open">
+                                                @click="open = true">
                                                 <i class="bi bi-arrow-return-left"></i>
                                                 <span>Kembalikan Item Ini</span>
                                             </button>
 
-                                            <div x-show="open" x-transition:enter="transition ease-out duration-200"
-                                                x-transition:enter-start="opacity-0 max-h-0"
-                                                x-transition:enter-end="opacity-100 max-h-40"
-                                                x-transition:leave="transition ease-in duration-150"
-                                                x-transition:leave-start="opacity-100 max-h-40"
-                                                x-transition:leave-end="opacity-0 max-h-0"
-                                                class="mt-3 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
+                                            <x-modal1 name="open" title="Kembalikan Item" max-width="max-w-lg">
                                                 <form method="POST" action="{{ route('siswa.kembalikan') }}"
-                                                    class="space-y-3">
+                                                    class="space-y-3" @submit="loading = true">
                                                     @csrf
 
-                                                    <input type="hidden" name="detail_id"
-                                                        value="{{ $item['detail_id'] }}">
+                                                    <input type="hidden" name="detail_id" value="{{ $detailId }}">
+                                                    <input type="hidden" name="kode_pinjam"
+                                                        value="{{ $hasilKode['kode_pinjam'] ?? '' }}">
+                                                    <input type="hidden" name="tab_aktif" value="pengembalian">
+
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+                                                            {{ $item['barang'] ?? '-' }}
+                                                        </p>
+                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ $item['unit_qty'] ?? '-' }}
+                                                        </p>
+                                                    </div>
 
                                                     <div>
                                                         <div class="mb-1 flex items-center justify-between gap-3">
@@ -620,6 +724,7 @@
                                                                 class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                                                                 Kondisi Saat Kembali
                                                             </label>
+
                                                             <span class="text-sm font-semibold" :class="warnaKondisiText">
                                                                 <span x-text="labelKondisi"></span>
                                                                 <span x-text="kondisi + '%'"></span>
@@ -630,10 +735,26 @@
                                                             max="100" x-model="kondisi" :style="warnaSlider"
                                                             class="block w-full">
 
-                                                        <div x-show="kondisi <= 34" x-transition
+                                                        <div
+                                                            class="mt-2 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
+                                                            <span>Rusak Parah 0%</span>
+                                                            <span>Rusak 35%</span>
+                                                            <span>Lumayan 60%</span>
+                                                            <span>Baik 80%</span>
+                                                        </div>
+
+                                                        <div x-cloak x-show="kondisi <= 34" x-transition
                                                             class="mt-2 text-xs text-red-600 dark:text-red-400">
                                                             Rusak Parah — unit akan otomatis dikunci.
                                                         </div>
+
+                                                        @if ($modalShouldOpen)
+                                                            @error('kondisi_kembali')
+                                                                <p class="mt-2 text-[11px] text-red-600 dark:text-red-400">
+                                                                    {{ $message }}
+                                                                </p>
+                                                            @enderror
+                                                        @endif
                                                     </div>
 
                                                     <div>
@@ -641,30 +762,45 @@
                                                             class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                                             Catatan Kerusakan
                                                         </label>
-                                                        <textarea name="catatan_kembali" rows="1"
-                                                            class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"></textarea>
+                                                        <textarea name="catatan_kembali" rows="2"
+                                                            class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ $modalShouldOpen ? old('catatan_kembali') : '' }}</textarea>
+
+                                                        @if ($modalShouldOpen)
+                                                            @error('catatan_kembali')
+                                                                <p class="mt-2 text-[11px] text-red-600 dark:text-red-400">
+                                                                    {{ $message }}
+                                                                </p>
+                                                            @enderror
+                                                        @endif
                                                     </div>
 
-                                                    <div class="flex justify-end">
-                                                        <button type="submit"
+                                                    <div class="flex justify-end gap-2">
+                                                        <button type="button"
+                                                            class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                                                            @click="open = false" :disabled="loading">
+                                                            Batal
+                                                        </button>
+
+                                                        <button type="submit" :disabled="loading"
+                                                            :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
                                                             class="inline-flex items-center gap-2 rounded-md bg-teal-600 px-3 py-1.5 text-xs text-white hover:bg-teal-700">
-                                                            <i class="bi bi-check-lg"></i>
-                                                            <span>Simpan Pengembalian</span>
+                                                            <span x-show="!loading">Simpan Pengembalian</span>
+                                                            <span x-show="loading" class="inline-flex items-center gap-2">
+                                                                <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                                                                <span>Menyimpan...</span>
+                                                            </span>
                                                         </button>
                                                     </div>
                                                 </form>
-                                            </div>
+                                            </x-modal1>
                                         </div>
-                                    @else
-                                        <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                                            @if ($item['waktu_kembali'])
-                                                Dikembalikan: {{ $item['waktu_kembali'] }}
-                                            @endif
-
-                                            @if ($item['catatan_kembali'])
-                                                <div class="mt-1">
-                                                    Catatan: {{ $item['catatan_kembali'] }}
-                                                </div>
+                                    @elseif ($statusItem !== 'dipinjam')
+                                        <div
+                                            class="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-900/40 dark:text-gray-300">
+                                            @if ($catatanKembali)
+                                                {{ $catatanKembali }}
+                                            @else
+                                                Item sudah dikembalikan.
                                             @endif
                                         </div>
                                     @endif

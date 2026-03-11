@@ -8,8 +8,8 @@
     'icon' => 'bi-exclamation-triangle-fill',
 ])
 
-<div x-cloak x-show="{{ $name }}" class="fixed inset-0 z-[95] overflow-y-auto" aria-modal="true" role="dialog"
-    @keydown.escape.window="{{ $name }} = false">
+<div x-cloak x-show="{{ $name }}" x-transition.opacity.duration.200ms class="fixed inset-0 z-[95] overflow-y-auto"
+    aria-modal="true" role="dialog" @keydown.escape.window="{{ $name }} = false">
     <div class="fixed inset-0 bg-gray-900/60" @click="{{ $name }} = false"></div>
 
     <div class="relative flex min-h-screen items-center justify-center p-4">
@@ -30,19 +30,21 @@
                         <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                             {{ $title }}
                         </h3>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-sm leading-6 text-gray-500 dark:text-gray-400">
                             {{ $message }}
                         </p>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    {{ $slot }}
-                </div>
+                @if (trim($slot) !== '')
+                    <div class="mt-4">
+                        {{ $slot }}
+                    </div>
+                @endif
 
                 <div class="mt-4 flex justify-end gap-2">
                     <button type="button"
-                        class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                        class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
                         @click="{{ $name }} = false">
                         {{ $cancelText }}
                     </button>
@@ -50,7 +52,8 @@
                     @isset($footer)
                         {{ $footer }}
                     @else
-                        <button type="button" class="rounded-md px-3 py-1.5 text-xs {{ $confirmClass }}">
+                        <button type="button"
+                            class="rounded-md px-3 py-1.5 text-xs transition-colors {{ $confirmClass }}">
                             {{ $confirmText }}
                         </button>
                     @endisset

@@ -165,16 +165,19 @@
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
                                         {{ $aktivitas['tanggal_label'] }}
                                     </td>
+
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                         <span
                                             class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 {{ $badgeClass }}">
                                             {{ ucfirst($aktivitas['jenis']) }}
                                         </span>
                                     </td>
+
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-200">
                                         {{ $aktivitas['barang'] }}
                                     </td>
+
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
                                         {{ $aktivitas['keterangan'] }}
@@ -206,6 +209,13 @@
 
                     this.started = true;
 
+                    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                    if (reduceMotion) {
+                        this.value = this.target;
+                        return;
+                    }
+
                     const duration = 900;
                     const startTime = performance.now();
 
@@ -219,9 +229,10 @@
 
                         if (progress < 1) {
                             requestAnimationFrame(animate);
-                        } else {
-                            this.value = this.target;
+                            return;
                         }
+
+                        this.value = this.target;
                     };
 
                     requestAnimationFrame(animate);
@@ -230,214 +241,205 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            window.chartInstances = window.chartInstances || [];
+            window.chartInstances = [];
 
-            if (typeof Chart === 'undefined') {
-                return;
-            }
+            const bootCharts = () => {
+                if (typeof Chart === 'undefined') {
+                    return;
+                }
 
-            const isDark = () => document.documentElement.classList.contains('dark');
-            const gridColor = () => (isDark() ? '#374151' : '#e5e7eb');
-            const tickColor = () => (isDark() ? '#9ca3af' : '#6b7280');
-            const borderColor = () => (isDark() ? '#60a5fa' : '#2563eb');
+                const isDark = () => document.documentElement.classList.contains('dark');
+                const gridColor = () => (isDark() ? '#374151' : '#e5e7eb');
+                const tickColor = () => (isDark() ? '#9ca3af' : '#6b7280');
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-            const lineLabels = @json($lineChart['labels']);
-            const lineData = @json($lineChart['data']);
+                const chartAnimation = reduceMotion ?
+                    false :
+                    {
+                        duration: 600,
+                        easing: 'easeOutQuart',
+                    };
 
-            const donutData = [
-                {{ (int) $kondisiChart['baik'] }},
-                {{ (int) $kondisiChart['lumayan'] }},
-                {{ (int) $kondisiChart['rusak'] }},
-                {{ (int) $kondisiChart['rusak_parah'] }},
-            ];
-
-            const barLabels = @json($barChart['labels']);
-            const barData = @json($barChart['data']);
-
-            const defaultAnimation = {
-                duration: 600,
-                easing: 'easeOutQuart',
-            };
-
-            const lineCanvas = document.getElementById('lineChart');
-
-            if (lineCanvas) {
-                const lineChart = new Chart(lineCanvas, {
-                    type: 'line',
-                    data: {
-                        labels: lineLabels,
-                        datasets: [{
-                            label: 'Peminjaman',
-                            data: lineData,
-                            borderColor: () => borderColor(),
-                            backgroundColor: 'rgba(37, 99, 235, 0.12)',
-                            tension: 0.35,
-                            fill: true,
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 4,
-                        }, ],
+                const commonLegendLabel = {
+                    font: {
+                        size: 11,
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: defaultAnimation,
-                        plugins: {
-                            legend: {
-                                display: false,
-                                labels: {
-                                    font: {
-                                        size: 11,
-                                    },
-                                    color: () => tickColor(),
+                    color: () => tickColor(),
+                };
+
+                const commonTicks = {
+                    color: () => tickColor(),
+                    font: {
+                        size: 11,
+                    },
+                };
+
+                const lineLabels = @json($lineChart['labels']);
+                const lineData = @json($lineChart['data']);
+
+                const donutData = [
+                    {{ (int) $kondisiChart['baik'] }},
+                    {{ (int) $kondisiChart['lumayan'] }},
+                    {{ (int) $kondisiChart['rusak'] }},
+                    {{ (int) $kondisiChart['rusak_parah'] }},
+                ];
+
+                const barLabels = @json($barChart['labels']);
+                const barData = @json($barChart['data']);
+
+                const lineCanvas = document.getElementById('lineChart');
+
+                if (lineCanvas) {
+                    const lineChart = new Chart(lineCanvas, {
+                        type: 'line',
+                        data: {
+                            labels: lineLabels,
+                            datasets: [{
+                                label: 'Peminjaman',
+                                data: lineData,
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                                tension: 0.35,
+                                fill: true,
+                                borderWidth: 2,
+                                pointRadius: 3,
+                                pointHoverRadius: 4,
+                            }, ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: chartAnimation,
+                            plugins: {
+                                legend: {
+                                    display: false,
+                                    labels: commonLegendLabel,
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
                                 },
                             },
-                            tooltip: {
+                            interaction: {
                                 mode: 'index',
                                 intersect: false,
                             },
-                        },
-                        interaction: {
-                            mode: 'index',
-                            intersect: false,
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    color: () => gridColor(),
-                                },
-                                ticks: {
-                                    color: () => tickColor(),
-                                    font: {
-                                        size: 11,
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: () => gridColor(),
                                     },
+                                    ticks: commonTicks,
                                 },
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: () => gridColor(),
-                                },
-                                ticks: {
-                                    precision: 0,
-                                    color: () => tickColor(),
-                                    font: {
-                                        size: 11,
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: () => gridColor(),
+                                    },
+                                    ticks: {
+                                        ...commonTicks,
+                                        precision: 0,
                                     },
                                 },
                             },
                         },
-                    },
-                });
+                    });
 
-                window.chartInstances.push(lineChart);
-            }
+                    window.chartInstances.push(lineChart);
+                }
 
-            const donutCanvas = document.getElementById('donutChart');
+                const donutCanvas = document.getElementById('donutChart');
 
-            if (donutCanvas) {
-                const donutChart = new Chart(donutCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: [
-                            'Baik (80-100%)',
-                            'Lumayan (60-79%)',
-                            'Rusak (35-59%)',
-                            'Rusak Parah (≤34%)',
-                        ],
-                        datasets: [{
-                            data: donutData,
-                            backgroundColor: ['#059669', '#2563eb', '#f59e0b', '#ef4444'],
-                            borderWidth: 0,
-                            hoverOffset: 6,
-                        }, ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '64%',
-                        animation: defaultAnimation,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    boxWidth: 10,
-                                    boxHeight: 10,
-                                    padding: 12,
-                                    font: {
-                                        size: 11,
+                if (donutCanvas) {
+                    const donutChart = new Chart(donutCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: [
+                                'Baik (80-100%)',
+                                'Lumayan (60-79%)',
+                                'Rusak (35-59%)',
+                                'Rusak Parah (≤34%)',
+                            ],
+                            datasets: [{
+                                data: donutData,
+                                backgroundColor: ['#059669', '#2563eb', '#f59e0b', '#ef4444'],
+                                borderWidth: 0,
+                                hoverOffset: 6,
+                            }, ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '64%',
+                            animation: chartAnimation,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        ...commonLegendLabel,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        padding: 12,
                                     },
-                                    color: () => tickColor(),
                                 },
                             },
                         },
-                    },
-                });
+                    });
 
-                window.chartInstances.push(donutChart);
-            }
+                    window.chartInstances.push(donutChart);
+                }
 
-            const barCanvas = document.getElementById('barChart');
+                const barCanvas = document.getElementById('barChart');
 
-            if (barCanvas) {
-                const barChart = new Chart(barCanvas, {
-                    type: 'bar',
-                    data: {
-                        labels: barLabels,
-                        datasets: [{
-                            label: 'Jumlah Barang',
-                            data: barData,
-                            backgroundColor: '#2563eb',
-                            borderRadius: 6,
-                            maxBarThickness: 36,
-                        }, ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: defaultAnimation,
-                        plugins: {
-                            legend: {
-                                display: false,
-                                labels: {
-                                    font: {
-                                        size: 11,
-                                    },
-                                    color: () => tickColor(),
-                                },
-                            },
+                if (barCanvas) {
+                    const barChart = new Chart(barCanvas, {
+                        type: 'bar',
+                        data: {
+                            labels: barLabels,
+                            datasets: [{
+                                label: 'Jumlah Barang',
+                                data: barData,
+                                backgroundColor: '#2563eb',
+                                borderRadius: 6,
+                                maxBarThickness: 36,
+                            }, ],
                         },
-                        scales: {
-                            x: {
-                                grid: {
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: chartAnimation,
+                            plugins: {
+                                legend: {
                                     display: false,
-                                },
-                                ticks: {
-                                    color: () => tickColor(),
-                                    font: {
-                                        size: 11,
-                                    },
+                                    labels: commonLegendLabel,
                                 },
                             },
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: () => gridColor(),
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false,
+                                    },
+                                    ticks: commonTicks,
                                 },
-                                ticks: {
-                                    precision: 0,
-                                    color: () => tickColor(),
-                                    font: {
-                                        size: 11,
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: () => gridColor(),
+                                    },
+                                    ticks: {
+                                        ...commonTicks,
+                                        precision: 0,
                                     },
                                 },
                             },
                         },
-                    },
-                });
+                    });
 
-                window.chartInstances.push(barChart);
-            }
+                    window.chartInstances.push(barChart);
+                }
+            };
+
+            bootCharts();
         });
     </script>
 @endpush

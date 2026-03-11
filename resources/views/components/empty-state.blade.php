@@ -18,11 +18,11 @@
         {{ $title }}
     </h3>
 
-    <p class="mx-auto mt-1 max-w-sm text-sm text-gray-500 dark:text-gray-400">
+    <p class="mx-auto mt-1 max-w-sm text-sm leading-6 text-gray-500 dark:text-gray-400">
         {{ $message }}
     </p>
 
-    @if (trim($slot))
+    @if (trim($slot) !== '')
         <div class="mt-4">
             {{ $slot }}
         </div>

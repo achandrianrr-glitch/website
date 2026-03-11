@@ -35,6 +35,10 @@
         ])
             ->filter()
             ->count();
+
+        $kategoriAktif = filled($filters['kategori_id'] ?? null)
+            ? $kategori->firstWhere('id', (int) $filters['kategori_id'])
+            : null;
     @endphp
 
     <div class="space-y-3">
@@ -57,26 +61,30 @@
 
         <div
             class="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-            {{-- Search terpisah, submit hanya saat Enter --}}
-            <form method="GET" action="{{ route('barang.index') }}" x-data="{ keyword: @js($filters['q']) }" x-ref="searchForm"
-                class="w-full max-w-52">
+            {{-- Search --}}
+            <form method="GET" action="{{ route('barang.index') }}" class="w-full max-w-52">
+                <input type="hidden" name="kategori_id" value="{{ $filters['kategori_id'] }}">
+                <input type="hidden" name="tipe" value="{{ $filters['tipe'] }}">
+                <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                <input type="hidden" name="kondisi" value="{{ $filters['kondisi'] }}">
+
                 <label for="q" class="sr-only">Cari barang</label>
+
                 <div class="relative">
                     <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-gray-400">
                         <i class="bi bi-search text-sm"></i>
                     </span>
 
-                    <input id="q" type="text" x-model.debounce.300ms="keyword"
-                        @keydown.enter.prevent="$refs.searchForm.submit()" value="{{ $filters['q'] }}"
+                    <input id="q" name="q" type="text" value="{{ $filters['q'] }}"
                         placeholder="Cari nama barang..."
                         class="block w-full rounded-md border-gray-300 py-1.5 pl-8 pr-2.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
-
-                    <input type="hidden" name="q" :value="keyword">
                 </div>
             </form>
 
-            {{-- Filter terpisah --}}
+            {{-- Filter --}}
             <form method="GET" action="{{ route('barang.index') }}" x-data="{ open: false }" class="relative">
+                <input type="hidden" name="q" value="{{ $filters['q'] }}">
+
                 <button type="button"
                     class="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                     @click="open = !open" @click.outside="open = false">
@@ -104,6 +112,7 @@
                                 class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                                 Kategori
                             </p>
+
                             <div class="space-y-1.5">
                                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                                     <input type="radio" name="kategori_id" value="" @checked(blank($filters['kategori_id']))>
@@ -125,15 +134,18 @@
                                 class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                                 Tipe
                             </p>
+
                             <div class="space-y-1.5">
                                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                                     <input type="radio" name="tipe" value="" @checked(blank($filters['tipe']))>
                                     <span>Semua</span>
                                 </label>
+
                                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                                     <input type="radio" name="tipe" value="aset" @checked(($filters['tipe'] ?? null) === 'aset')>
                                     <span>Aset</span>
                                 </label>
+
                                 <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                                     <input type="radio" name="tipe" value="stok" @checked(($filters['tipe'] ?? null) === 'stok')>
                                     <span>Stok</span>
@@ -146,6 +158,7 @@
                                 class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                                 Status
                             </p>
+
                             <div class="space-y-1.5">
                                 @foreach (['' => 'Semua', 'tersedia' => 'Tersedia', 'dipinjam' => 'Dipinjam', 'rusak' => 'Rusak', 'keluar' => 'Keluar'] as $value => $label)
                                     <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
@@ -162,6 +175,7 @@
                                 class="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
                                 Kondisi
                             </p>
+
                             <div class="space-y-1.5">
                                 @foreach ([
             '' => 'Semua',
@@ -184,6 +198,7 @@
                                 class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
                                 Reset
                             </a>
+
                             <button type="submit"
                                 class="rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700"
                                 @click="open = false">
@@ -203,16 +218,11 @@
                         </span>
                     @endif
 
-                    @if ($filters['kategori_id'])
-                        @php
-                            $kategoriAktif = $kategori->firstWhere('id', (int) $filters['kategori_id']);
-                        @endphp
-                        @if ($kategoriAktif)
-                            <span
-                                class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-[10px] text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                                Kategori: {{ $kategoriAktif->nama }}
-                            </span>
-                        @endif
+                    @if ($kategoriAktif)
+                        <span
+                            class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-[10px] text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+                            Kategori: {{ $kategoriAktif->nama }}
+                        </span>
                     @endif
 
                     @if ($labelTipeFilter)
@@ -284,6 +294,7 @@
                             @foreach ($barang as $item)
                                 @php
                                     $isAset = $item->tipe === 'aset';
+
                                     $rataKondisi = $isAset
                                         ? (int) round((float) ($item->rata_kondisi_unit ?? 0))
                                         : (int) ($item->kondisi_stok ?? 100);
@@ -443,6 +454,7 @@
                 @foreach ($barang as $item)
                     @php
                         $isAset = $item->tipe === 'aset';
+
                         $rataKondisi = $isAset
                             ? (int) round((float) ($item->rata_kondisi_unit ?? 0))
                             : (int) ($item->kondisi_stok ?? 100);
@@ -492,7 +504,9 @@
                         </div>
 
                         <div class="mt-3 flex items-center gap-2">
-                            <span class="text-xs text-gray-600 dark:text-gray-300">{{ $rataKondisi }}%</span>
+                            <span class="text-xs text-gray-600 dark:text-gray-300">
+                                {{ $rataKondisi }}%
+                            </span>
 
                             <div class="w-full max-w-[72px]">
                                 <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -536,7 +550,7 @@
                                 </button>
 
                                 <x-confirm-modal name="hapus" title="Hapus Barang"
-                                    message="Barang '{{ $item->nama }}' akan dihapus. Sistem akan menolak jika barang masih dipinjam atau sudah punya riwayat."
+                                    message="Barang '{{ $item->nama }}' akan dihapus. Sistem akan menolak jika barang masih dipinjam atau sudah punya riwayat transaksi/peminjaman."
                                     confirm-text="Ya, Hapus">
                                     <x-slot:footer>
                                         <button type="button"

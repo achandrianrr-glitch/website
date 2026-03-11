@@ -85,10 +85,12 @@
                                                 class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
                                                 {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($item->nama, 0, 1)) }}
                                             </div>
-                                            <div>
-                                                <p class="text-sm font-medium text-gray-800 dark:text-gray-100">
+
+                                            <div class="min-w-0">
+                                                <p class="truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                                                     {{ $item->nama }}
                                                 </p>
+
                                                 @if ($isSelf)
                                                     <p class="text-[11px] text-blue-600 dark:text-blue-400">
                                                         Akun aktif saat ini
@@ -166,11 +168,12 @@
                                         class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
                                         {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($item->nama, 0, 1)) }}
                                     </div>
-                                    <div>
-                                        <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">
+
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-gray-800 dark:text-gray-100">
                                             {{ $item->nama }}
                                         </p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                        <p class="truncate text-xs text-gray-500 dark:text-gray-400">
                                             {{ $item->email }}
                                         </p>
                                     </div>
@@ -220,7 +223,7 @@
             </div>
 
             <div class="pt-1">
-                {{ $pengguna->links('components.pagination') }}
+                {{ $pengguna->appends(request()->query())->links('components.pagination') }}
             </div>
         @else
             <x-empty-state icon="bi-people" title="Belum ada pengguna"
@@ -235,10 +238,10 @@
         @endif
     </div>
 
-    {{-- Modal tambah --}}
     <div x-data="{ open: @js(old('_form') === 'tambah-pengguna') }" @open-tambah-pengguna.window="open = true">
-        <x-modal1 name="open" title="Tambah Pengguna" max-width="max-w-lg">
-            <form method="POST" action="{{ route('pengguna.store') }}" class="space-y-3">
+        <x-modal name="open" title="Tambah Pengguna" max-width="max-w-lg">
+            <form method="POST" action="{{ route('pengguna.store') }}" class="space-y-3" x-data="{ loading: false }"
+                @submit="loading = true">
                 @csrf
                 <input type="hidden" name="_form" value="tambah-pengguna">
 
@@ -247,7 +250,7 @@
                         Nama
                     </label>
                     <input id="nama" name="nama" type="text"
-                        value="{{ old('_form') === 'tambah-pengguna' ? old('nama') : '' }}"
+                        value="{{ old('_form') === 'tambah-pengguna' ? old('nama') : '' }}" autocomplete="name"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     @if (old('_form') === 'tambah-pengguna')
                         @error('nama')
@@ -261,7 +264,7 @@
                         Email
                     </label>
                     <input id="email" name="email" type="email"
-                        value="{{ old('_form') === 'tambah-pengguna' ? old('email') : '' }}"
+                        value="{{ old('_form') === 'tambah-pengguna' ? old('email') : '' }}" autocomplete="email"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     @if (old('_form') === 'tambah-pengguna')
                         @error('email')
@@ -274,7 +277,7 @@
                     <label for="password" class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                         Password
                     </label>
-                    <input id="password" name="password" type="password"
+                    <input id="password" name="password" type="password" autocomplete="new-password"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     @if (old('_form') === 'tambah-pengguna')
                         @error('password')
@@ -289,34 +292,39 @@
                         Konfirmasi Password
                     </label>
                     <input id="password_confirmation" name="password_confirmation" type="password"
+                        autocomplete="new-password"
                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                 </div>
 
                 <div class="flex justify-end gap-2">
                     <button type="button"
                         class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                        @click="open = false">
+                        @click="open = false" :disabled="loading">
                         Batal
                     </button>
 
-                    <button type="submit"
-                        class="rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700">
-                        Simpan
+                    <button type="submit" :disabled="loading" :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
+                        class="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700">
+                        <span x-show="!loading">Simpan</span>
+                        <span x-show="loading" class="inline-flex items-center gap-2">
+                            <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                            <span>Menyimpan...</span>
+                        </span>
                     </button>
                 </div>
             </form>
-        </x-modal1>
+        </x-modal>
     </div>
 
-    {{-- Modal edit / reset / hapus per pengguna --}}
     @foreach ($pengguna as $item)
         @php
             $isSelf = (int) auth()->id() === (int) $item->id;
         @endphp
 
         <div x-data="{ open: @js(old('_form') === 'edit-pengguna-' . $item->id) }" @open-edit-pengguna-{{ $item->id }}.window="open = true">
-            <x-modal1 name="open" title="Edit Pengguna" max-width="max-w-lg">
-                <form method="POST" action="{{ route('pengguna.update', $item) }}" class="space-y-3">
+            <x-modal name="open" title="Edit Pengguna" max-width="max-w-lg">
+                <form method="POST" action="{{ route('pengguna.update', $item) }}" class="space-y-3"
+                    x-data="{ loading: false }" @submit="loading = true">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="_form" value="edit-pengguna-{{ $item->id }}">
@@ -328,6 +336,7 @@
                         </label>
                         <input id="nama-{{ $item->id }}" name="nama" type="text"
                             value="{{ old('_form') === 'edit-pengguna-' . $item->id ? old('nama') : $item->nama }}"
+                            autocomplete="name"
                             class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                         @if (old('_form') === 'edit-pengguna-' . $item->id)
                             @error('nama')
@@ -343,6 +352,7 @@
                         </label>
                         <input id="email-{{ $item->id }}" name="email" type="email"
                             value="{{ old('_form') === 'edit-pengguna-' . $item->id ? old('email') : $item->email }}"
+                            autocomplete="email"
                             class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                         @if (old('_form') === 'edit-pengguna-' . $item->id)
                             @error('email')
@@ -354,22 +364,28 @@
                     <div class="flex justify-end gap-2">
                         <button type="button"
                             class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                            @click="open = false">
+                            @click="open = false" :disabled="loading">
                             Batal
                         </button>
 
-                        <button type="submit"
-                            class="rounded-md bg-amber-500 px-3 py-1.5 text-xs text-white hover:bg-amber-600">
-                            Perbarui
+                        <button type="submit" :disabled="loading"
+                            :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
+                            class="inline-flex items-center gap-2 rounded-md bg-amber-500 px-3 py-1.5 text-xs text-white hover:bg-amber-600">
+                            <span x-show="!loading">Perbarui</span>
+                            <span x-show="loading" class="inline-flex items-center gap-2">
+                                <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                                <span>Menyimpan...</span>
+                            </span>
                         </button>
                     </div>
                 </form>
-            </x-modal1>
+            </x-modal>
         </div>
 
         <div x-data="{ open: @js(old('_form') === 'reset-password-' . $item->id) }" @open-reset-password-{{ $item->id }}.window="open = true">
-            <x-modal1 name="open" title="Reset Password" max-width="max-w-lg">
-                <form method="POST" action="{{ route('pengguna.reset-password', $item) }}" class="space-y-3">
+            <x-modal name="open" title="Reset Password" max-width="max-w-lg">
+                <form method="POST" action="{{ route('pengguna.reset-password', $item) }}" class="space-y-3"
+                    x-data="{ loading: false }" @submit="loading = true">
                     @csrf
                     @method('PATCH')
                     <input type="hidden" name="_form" value="reset-password-{{ $item->id }}">
@@ -386,6 +402,7 @@
                             Password Baru
                         </label>
                         <input id="reset-password-{{ $item->id }}" name="password" type="password"
+                            autocomplete="new-password"
                             class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                         @if (old('_form') === 'reset-password-' . $item->id)
                             @error('password')
@@ -400,24 +417,29 @@
                             Konfirmasi Password Baru
                         </label>
                         <input id="reset-password-confirmation-{{ $item->id }}" name="password_confirmation"
-                            type="password"
+                            type="password" autocomplete="new-password"
                             class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     </div>
 
                     <div class="flex justify-end gap-2">
                         <button type="button"
                             class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                            @click="open = false">
+                            @click="open = false" :disabled="loading">
                             Batal
                         </button>
 
-                        <button type="submit"
-                            class="rounded-md bg-sky-600 px-3 py-1.5 text-xs text-white hover:bg-sky-700">
-                            Simpan Password
+                        <button type="submit" :disabled="loading"
+                            :class="loading ? 'opacity-70 cursor-not-allowed' : ''"
+                            class="inline-flex items-center gap-2 rounded-md bg-sky-600 px-3 py-1.5 text-xs text-white hover:bg-sky-700">
+                            <span x-show="!loading">Simpan Password</span>
+                            <span x-show="loading" class="inline-flex items-center gap-2">
+                                <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
+                                <span>Menyimpan...</span>
+                            </span>
                         </button>
                     </div>
                 </form>
-            </x-modal1>
+            </x-modal>
         </div>
 
         <div x-data="{ open: false }" @open-hapus-pengguna-{{ $item->id }}.window="open = true">

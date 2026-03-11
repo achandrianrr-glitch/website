@@ -4,6 +4,14 @@
 @section('meta_description', 'Pantau data peminjaman inventaris Shiro.')
 
 @section('content')
+    @php
+        $tabLinks = [
+            'aktif' => 'Aktif',
+            'selesai' => 'Selesai',
+            'semua' => 'Semua',
+        ];
+    @endphp
+
     <div class="space-y-3">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
@@ -13,28 +21,20 @@
 
                 <span
                     class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-[10px] font-medium text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
-                    {{ $counts['aktif'] }} aktif
+                    {{ $counts['aktif'] ?? 0 }} aktif
                 </span>
             </div>
         </div>
 
         <div class="border-b border-gray-200 dark:border-gray-700">
             <nav class="-mb-px flex gap-4">
-                @php
-                    $tabLinks = [
-                        'aktif' => 'Aktif',
-                        'selesai' => 'Selesai',
-                        'semua' => 'Semua',
-                    ];
-                @endphp
-
                 @foreach ($tabLinks as $key => $label)
                     <a href="{{ route('peminjaman.index', array_merge(request()->except('page'), ['tab' => $key])) }}"
-                        class="border-b-2 px-1 py-2 text-sm
-                            {{ $tab === $key
-                                ? 'border-blue-600 font-medium text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
+                        class="border-b-2 px-1 py-2 text-sm {{ $tab === $key
+                            ? 'border-blue-600 font-medium text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' }}">
                         {{ $label }}
+
                         @if (isset($counts[$key]))
                             <span class="ml-1 text-xs">({{ $counts[$key] }})</span>
                         @endif
@@ -201,7 +201,7 @@
             </div>
 
             <div class="pt-1">
-                {{ $peminjaman->links('components.pagination') }}
+                {{ $peminjaman->appends(request()->query())->links('components.pagination') }}
             </div>
         @else
             <x-empty-state icon="bi-people" title="Belum ada data peminjaman"

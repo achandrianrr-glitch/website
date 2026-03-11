@@ -129,15 +129,18 @@
                                 class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 <option value="">Pilih merek</option>
                                 @foreach ($merek as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                    <option value="{{ $item->id }}" @selected((string) old('merek_id') === (string) $item->id)>
+                                        {{ $item->nama }}
+                                    </option>
                                 @endforeach
-                                <option value="lainnya">Lainnya</option>
+                                <option value="lainnya" @selected(old('merek_id') === 'lainnya')>Lainnya</option>
                             </select>
+
                             @error('merek_id')
                                 <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
 
-                            <div x-show="merekId === 'lainnya'" x-transition class="mt-2">
+                            <div x-cloak x-show="merekId === 'lainnya'" x-transition class="mt-2">
                                 <input name="merek_manual" type="text" value="{{ old('merek_manual') }}"
                                     placeholder="Masukkan merek manual"
                                     class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
@@ -155,15 +158,18 @@
                                 class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 <option value="">Pilih lokasi</option>
                                 @foreach ($lokasi as $item)
-                                    <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                    <option value="{{ $item->id }}" @selected((string) old('lokasi_id') === (string) $item->id)>
+                                        {{ $item->nama }}
+                                    </option>
                                 @endforeach
-                                <option value="lainnya">Lainnya</option>
+                                <option value="lainnya" @selected(old('lokasi_id') === 'lainnya')>Lainnya</option>
                             </select>
+
                             @error('lokasi_id')
                                 <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
 
-                            <div x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
+                            <div x-cloak x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
                                 <input name="lokasi_manual" type="text" value="{{ old('lokasi_manual') }}"
                                     placeholder="Masukkan lokasi manual"
                                     class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
@@ -200,7 +206,7 @@
                             @enderror
                         </div>
 
-                        <div x-show="tipe === 'aset'" x-transition class="space-y-3">
+                        <div x-cloak x-show="tipe === 'aset'" x-transition class="space-y-3">
                             <div>
                                 <label for="jumlah_unit"
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -234,7 +240,7 @@
                             </div>
                         </div>
 
-                        <div x-show="tipe === 'stok'" x-transition class="space-y-3">
+                        <div x-cloak x-show="tipe === 'stok'" x-transition class="space-y-3">
                             <div>
                                 <label for="qty_total"
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -255,6 +261,7 @@
                                     class="block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Kondisi Awal % <span class="text-red-500">*</span>
                                 </label>
+
                                 <span class="text-sm font-semibold" :class="warnaKondisiText">
                                     <span x-text="labelKondisi"></span> <span x-text="kondisi + '%'"></span>
                                 </span>
@@ -271,7 +278,7 @@
                                 <span>Baik 80%</span>
                             </div>
 
-                            <div x-show="kondisi <= 34" x-transition
+                            <div x-cloak x-show="kondisi <= 34" x-transition
                                 class="mt-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-[11px] text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
                                 Kondisi ≤34% akan otomatis membuat status unit menjadi <strong>rusak</strong>.
                             </div>

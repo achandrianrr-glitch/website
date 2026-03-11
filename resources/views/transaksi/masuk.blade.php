@@ -4,6 +4,10 @@
 @section('meta_description', 'Catat barang masuk inventaris Shiro.')
 
 @section('content')
+    @php
+        $riwayatMasukData = $riwayatMasuk ?? ($riwayat ?? collect());
+    @endphp
+
     <div class="space-y-3">
         <div>
             <h1 class="text-base font-semibold text-gray-800 dark:text-gray-100">
@@ -26,13 +30,13 @@
             
                 query: '',
                 results: [],
-                selected: @js($barangTerpilih),
+                selected: @js($barangTerpilih ?? null),
                 searchTimeout: null,
             
                 init() {
                     if (this.selected) {
-                        this.query = this.selected.nama;
-                        this.tipe = this.selected.tipe;
+                        this.query = this.selected.nama ?? '';
+                        this.tipe = this.selected.tipe ?? this.tipe;
                     }
                 },
             
@@ -57,7 +61,7 @@
                     return 'accent-color: #ef4444';
                 },
             
-                cariBarang() {
+                async cariBarang() {
                     clearTimeout(this.searchTimeout);
             
                     this.searchTimeout = setTimeout(async () => {
@@ -67,19 +71,22 @@
                         }
             
                         try {
-                            const response = await fetch(`/api/barang/search?q=${encodeURIComponent(this.query)}`, {
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'Accept': 'application/json',
+                            const response = await fetch(
+                                `{{ route('api.barang.search') }}?q=${encodeURIComponent(this.query)}`, {
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json',
+                                    },
                                 }
-                            });
+                            );
             
                             if (!response.ok) {
                                 this.results = [];
                                 return;
                             }
             
-                            this.results = await response.json();
+                            const data = await response.json();
+                            this.results = Array.isArray(data) ? data : [];
                         } catch (error) {
                             this.results = [];
                         }
@@ -88,16 +95,16 @@
             
                 pilihBarang(item) {
                     this.selected = item;
-                    this.query = item.nama;
+                    this.query = item.nama ?? '';
                     this.results = [];
-                    this.tipe = item.tipe;
+                    this.tipe = item.tipe ?? this.tipe;
                 },
             
                 resetBarang() {
                     this.selected = null;
                     this.query = '';
                     this.results = [];
-                }
+                },
             }" x-init="init()" @submit="loading = true">
             @csrf
 
@@ -131,8 +138,7 @@
                     @enderror
                 </div>
 
-                {{-- MODE BARANG BARU --}}
-                <div x-show="modeBarang === 'baru'" x-transition class="space-y-4">
+                <div x-cloak x-show="modeBarang === 'baru'" x-transition class="space-y-4">
                     <div>
                         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                             Tipe Barang
@@ -160,7 +166,7 @@
                             </button>
                         </div>
 
-                        <input type="hidden" name="tipe" :value="tipe">
+                        <input type="hidden" name="tipe" :value="tipe" :disabled="modeBarang !== 'baru'">
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
@@ -171,7 +177,8 @@
                                     Nama Barang <span class="text-red-500">*</span>
                                 </label>
                                 <input id="nama" name="nama" type="text" value="{{ old('nama') }}"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 @error('nama')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -182,8 +189,8 @@
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Kategori <span class="text-red-500">*</span>
                                 </label>
-                                <select id="kategori_id" name="kategori_id"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                <select id="kategori_id" name="kategori_id" :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                     <option value="">Pilih kategori</option>
                                     @foreach ($kategori as $item)
                                         <option value="{{ $item->id }}" @selected((string) old('kategori_id') === (string) $item->id)>
@@ -202,18 +209,22 @@
                                     Merek
                                 </label>
                                 <select id="merek_id" name="merek_id" x-model="merekId"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                     <option value="">Pilih merek</option>
                                     @foreach ($merek as $item)
-                                        <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                        <option value="{{ $item->id }}" @selected((string) old('merek_id') === (string) $item->id)>
+                                            {{ $item->nama }}
+                                        </option>
                                     @endforeach
-                                    <option value="lainnya">Lainnya</option>
+                                    <option value="lainnya" @selected(old('merek_id') === 'lainnya')>Lainnya</option>
                                 </select>
 
-                                <div x-show="merekId === 'lainnya'" x-transition class="mt-2">
+                                <div x-cloak x-show="merekId === 'lainnya'" x-transition class="mt-2">
                                     <input name="merek_manual" type="text" value="{{ old('merek_manual') }}"
                                         placeholder="Masukkan merek manual"
-                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                        :disabled="modeBarang !== 'baru' || merekId !== 'lainnya'"
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 </div>
 
                                 @error('merek_id')
@@ -230,18 +241,22 @@
                                     Lokasi
                                 </label>
                                 <select id="lokasi_id" name="lokasi_id" x-model="lokasiId"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                     <option value="">Pilih lokasi</option>
                                     @foreach ($lokasi as $item)
-                                        <option value="{{ $item->id }}">{{ $item->nama }}</option>
+                                        <option value="{{ $item->id }}" @selected((string) old('lokasi_id') === (string) $item->id)>
+                                            {{ $item->nama }}
+                                        </option>
                                     @endforeach
-                                    <option value="lainnya">Lainnya</option>
+                                    <option value="lainnya" @selected(old('lokasi_id') === 'lainnya')>Lainnya</option>
                                 </select>
 
-                                <div x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
+                                <div x-cloak x-show="lokasiId === 'lainnya'" x-transition class="mt-2">
                                     <input name="lokasi_manual" type="text" value="{{ old('lokasi_manual') }}"
                                         placeholder="Masukkan lokasi manual"
-                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                        :disabled="modeBarang !== 'baru' || lokasiId !== 'lainnya'"
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 </div>
 
                                 @error('lokasi_id')
@@ -257,8 +272,8 @@
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Spesifikasi
                                 </label>
-                                <textarea id="spesifikasi" name="spesifikasi" rows="3"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('spesifikasi') }}</textarea>
+                                <textarea id="spesifikasi" name="spesifikasi" rows="3" :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('spesifikasi') }}</textarea>
                                 @error('spesifikasi')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -273,7 +288,8 @@
                                 </label>
                                 <input id="tahun_pengadaan" name="tahun_pengadaan" type="number" min="2000"
                                     max="{{ now()->year + 1 }}" value="{{ old('tahun_pengadaan') }}"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 @error('tahun_pengadaan')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -287,8 +303,10 @@
                                 </label>
                                 <input id="jumlah_masuk_baru" name="jumlah_masuk" type="number" min="1"
                                     max="1000" value="{{ old('jumlah_masuk', 1) }}"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
-                                <p x-show="tipe === 'aset'" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                <p x-cloak x-show="tipe === 'aset'"
+                                    class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                                     Nomor unit akan dibuat otomatis berdasarkan kategori.
                                 </p>
                                 @error('jumlah_masuk')
@@ -296,24 +314,38 @@
                                 @enderror
                             </div>
 
-                            <div x-show="tipe === 'aset'" x-transition>
+                            <div x-cloak x-show="tipe === 'aset'" x-transition>
                                 <label for="serial_number_list_baru"
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Serial Number
                                 </label>
                                 <textarea id="serial_number_list_baru" name="serial_number_list" rows="3"
-                                    placeholder="Satu serial number per baris"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('serial_number_list') }}</textarea>
+                                    placeholder="Satu serial number per baris" :disabled="modeBarang !== 'baru' || tipe !== 'aset'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('serial_number_list') }}</textarea>
                                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                                     Opsional. Untuk aset, satu baris mewakili satu unit.
                                 </p>
+                            </div>
+
+                            <div>
+                                <label for="sumber_tujuan_baru"
+                                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
+                                    Sumber
+                                </label>
+                                <input id="sumber_tujuan_baru" name="sumber_tujuan" type="text"
+                                    value="{{ old('sumber_tujuan') }}" maxlength="200"
+                                    placeholder="Contoh: Pengadaan Sekolah / Donasi / Pembelian"
+                                    :disabled="modeBarang !== 'baru'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                @error('sumber_tujuan')
+                                    <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- MODE BARANG EXISTING --}}
-                <div x-show="modeBarang === 'existing'" x-transition class="space-y-4">
+                <div x-cloak x-show="modeBarang === 'existing'" x-transition class="space-y-4">
                     <div class="relative">
                         <label for="barang_search"
                             class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
@@ -330,14 +362,15 @@
                                 autocomplete="off" placeholder="Ketik minimal 2 huruf..."
                                 class="block w-full rounded-md border-gray-300 py-1.5 pl-8 pr-10 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
 
-                            <button x-show="selected" type="button"
+                            <button x-cloak x-show="selected" type="button"
                                 class="absolute inset-y-0 right-0 inline-flex items-center px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                                 @click="resetBarang()" title="Reset pilihan barang">
                                 <i class="bi bi-x-lg text-xs"></i>
                             </button>
                         </div>
 
-                        <input type="hidden" name="barang_id" :value="selected ? selected.id : ''">
+                        <input type="hidden" name="barang_id" :value="selected ? selected.id : ''"
+                            :disabled="modeBarang !== 'existing'">
 
                         @error('barang_id')
                             <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -378,7 +411,7 @@
                         </div>
                     </div>
 
-                    <div x-show="selected" x-transition
+                    <div x-cloak x-show="selected" x-transition
                         class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/30 dark:bg-blue-900/10">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div class="min-w-0">
@@ -406,10 +439,10 @@
                         </div>
 
                         <div class="mt-2 text-xs text-blue-700 dark:text-blue-400">
-                            <span x-show="selected?.tipe === 'aset'">
+                            <span x-cloak x-show="selected?.tipe === 'aset'">
                                 Unit tersedia: <strong x-text="selected?.unit_tersedia ?? 0"></strong>
                             </span>
-                            <span x-show="selected?.tipe === 'stok'">
+                            <span x-cloak x-show="selected?.tipe === 'stok'">
                                 Stok tersedia: <strong x-text="selected?.qty_tersedia ?? 0"></strong>
                             </span>
                         </div>
@@ -424,33 +457,34 @@
                                 </label>
                                 <input id="jumlah_masuk_existing" name="jumlah_masuk" type="number" min="1"
                                     max="1000" value="{{ old('jumlah_masuk', 1) }}"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'existing'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 @error('jumlah_masuk')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <div x-show="selected && selected.tipe === 'aset'" x-transition>
+                            <div x-cloak x-show="selected && selected.tipe === 'aset'" x-transition>
                                 <label for="serial_number_list_existing"
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Serial Number Unit Baru
                                 </label>
                                 <textarea id="serial_number_list_existing" name="serial_number_list" rows="3"
                                     placeholder="Satu serial number per baris"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('serial_number_list') }}</textarea>
+                                    :disabled="modeBarang !== 'existing' || !selected || selected.tipe !== 'aset'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('serial_number_list') }}</textarea>
                             </div>
-                        </div>
 
-                        <div class="space-y-3">
                             <div>
-                                <label for="sumber_tujuan"
+                                <label for="sumber_tujuan_existing"
                                     class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300">
                                     Sumber
                                 </label>
-                                <input id="sumber_tujuan" name="sumber_tujuan" type="text"
+                                <input id="sumber_tujuan_existing" name="sumber_tujuan" type="text"
                                     value="{{ old('sumber_tujuan') }}" maxlength="200"
                                     placeholder="Contoh: Pengadaan Sekolah / Donasi / Pembelian"
-                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    :disabled="modeBarang !== 'existing'"
+                                    class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                                 @error('sumber_tujuan')
                                     <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -459,7 +493,6 @@
                     </div>
                 </div>
 
-                {{-- FIELD UMUM --}}
                 <div class="grid grid-cols-1 gap-3 lg:grid-cols-2">
                     <div>
                         <div class="mb-1 flex items-center justify-between gap-3">
@@ -541,9 +574,9 @@
                 </div>
 
                 <form method="GET" action="{{ route('transaksi.masuk') }}" class="flex flex-wrap items-center gap-2">
-                    <input type="date" name="dari" value="{{ $filterTanggal['dari'] }}"
+                    <input type="date" name="dari" value="{{ $filterTanggal['dari'] ?? request('dari') }}"
                         class="rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
-                    <input type="date" name="sampai" value="{{ $filterTanggal['sampai'] }}"
+                    <input type="date" name="sampai" value="{{ $filterTanggal['sampai'] ?? request('sampai') }}"
                         class="rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
                     <button type="submit"
                         class="rounded-md bg-gray-100 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600">
@@ -552,7 +585,7 @@
                 </form>
             </div>
 
-            @if ($riwayat->count() > 0)
+            @if ($riwayatMasukData->count() > 0)
                 <div class="overflow-x-auto">
                     <table class="min-w-full border-separate border-spacing-0">
                         <thead>
@@ -588,7 +621,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($riwayat as $trx)
+                            @foreach ($riwayatMasukData as $trx)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
@@ -623,7 +656,7 @@
                                     </td>
 
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                                        <x-kondisi-badge :kondisi="$trx->kondisi_saat_itu" :show-value="true" />
+                                        <x-kondisi-badge :kondisi="$trx->kondisi_saat_itu" />
                                     </td>
 
                                     <td
@@ -641,9 +674,11 @@
                     </table>
                 </div>
 
-                <div class="pt-3">
-                    {{ $riwayat->links('components.pagination') }}
-                </div>
+                @if (method_exists($riwayatMasukData, 'links'))
+                    <div class="pt-3">
+                        {{ $riwayatMasukData->links('components.pagination') }}
+                    </div>
+                @endif
             @else
                 <x-empty-state icon="bi-arrow-down-circle" title="Belum ada riwayat barang masuk"
                     message="Riwayat transaksi barang masuk akan muncul di sini." />

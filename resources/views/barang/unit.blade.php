@@ -4,6 +4,15 @@
 @section('meta_description', 'Kelola unit aset inventaris Shiro.')
 
 @section('content')
+    @php
+        $semuaUnit = $barang->relationLoaded('unitBarang') ? $barang->unitBarang : $barang->unitBarang()->get();
+
+        $totalUnit = $semuaUnit->count();
+        $jumlahTersedia = $semuaUnit->where('status', 'tersedia')->count();
+        $jumlahDipinjam = $semuaUnit->where('status', 'dipinjam')->count();
+        $jumlahRusak = $semuaUnit->where('status', 'rusak')->count();
+    @endphp
+
     <div class="space-y-3">
         <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
@@ -28,28 +37,28 @@
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                     <p class="text-[11px] text-gray-500 dark:text-gray-400">Total Unit</p>
                     <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
-                        {{ $barang->unitBarang()->count() }}
+                        {{ $totalUnit }}
                     </p>
                 </div>
 
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                     <p class="text-[11px] text-gray-500 dark:text-gray-400">Tersedia</p>
                     <p class="mt-1 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                        {{ $barang->unitBarang()->where('status', 'tersedia')->count() }}
+                        {{ $jumlahTersedia }}
                     </p>
                 </div>
 
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                     <p class="text-[11px] text-gray-500 dark:text-gray-400">Dipinjam</p>
                     <p class="mt-1 text-sm font-semibold text-amber-600 dark:text-amber-400">
-                        {{ $barang->unitBarang()->where('status', 'dipinjam')->count() }}
+                        {{ $jumlahDipinjam }}
                     </p>
                 </div>
 
                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/40">
                     <p class="text-[11px] text-gray-500 dark:text-gray-400">Rusak</p>
                     <p class="mt-1 text-sm font-semibold text-red-600 dark:text-red-400">
-                        {{ $barang->unitBarang()->where('status', 'rusak')->count() }}
+                        {{ $jumlahRusak }}
                     </p>
                 </div>
             </div>
@@ -59,16 +68,19 @@
             <div class="space-y-3">
                 @foreach ($unit as $item)
                     @php
-                        $warnaProgress = match (true) {
-                            $item->kondisi >= 80 => 'bg-emerald-500',
-                            $item->kondisi >= 60 => 'bg-blue-500',
-                            $item->kondisi >= 35 => 'bg-amber-500',
-                            default => 'bg-red-500',
-                        };
+                        $formKey = 'unit-' . $item->id;
+                        $isCurrentForm = old('_form') === $formKey;
+
+                        $nilaiSerial = $isCurrentForm
+                            ? old('serial_number', $item->serial_number)
+                            : $item->serial_number;
+                        $nilaiStatus = $isCurrentForm ? old('status', $item->status) : $item->status;
+                        $nilaiCatatan = $isCurrentForm ? old('catatan', $item->catatan) : $item->catatan;
+                        $nilaiKondisi = (int) ($isCurrentForm ? old('kondisi', $item->kondisi) : $item->kondisi);
                     @endphp
 
                     <div x-data="{
-                        kondisi: {{ old('kondisi', $item->kondisi) }},
+                        kondisi: {{ $nilaiKondisi }},
                         loading: false,
                     
                         get labelKondisi() {
@@ -90,6 +102,13 @@
                             if (this.kondisi >= 60) return 'accent-color: #2563eb';
                             if (this.kondisi >= 35) return 'accent-color: #f59e0b';
                             return 'accent-color: #ef4444';
+                        },
+                    
+                        get warnaProgress() {
+                            if (this.kondisi >= 80) return 'bg-emerald-500';
+                            if (this.kondisi >= 60) return 'bg-blue-500';
+                            if (this.kondisi >= 35) return 'bg-amber-500';
+                            return 'bg-red-500';
                         }
                     }"
                         class="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
@@ -99,8 +118,8 @@
                                     <h2 class="text-sm font-semibold text-gray-800 dark:text-gray-100">
                                         {{ $item->nomor_unit }}
                                     </h2>
-                                    <x-kondisi-badge :kondisi="$item->kondisi" />
-                                    <x-status-badge :status="$item->status" />
+                                    <x-kondisi-badge :kondisi="$nilaiKondisi" />
+                                    <x-status-badge :status="$nilaiStatus" />
                                 </div>
 
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -109,14 +128,12 @@
                             </div>
 
                             <div class="flex items-center gap-2">
-                                <span class="text-xs text-gray-600 dark:text-gray-300">
-                                    {{ $item->kondisi }}%
-                                </span>
+                                <span class="text-xs text-gray-600 dark:text-gray-300" x-text="kondisi + '%'"></span>
 
                                 <div class="w-full max-w-[72px]">
                                     <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                                        <div class="h-1.5 rounded-full {{ $warnaProgress }}"
-                                            style="width: {{ $item->kondisi }}%; transition: width 0.7s ease-out;"></div>
+                                        <div class="h-1.5 rounded-full transition-all duration-700 ease-out"
+                                            :class="warnaProgress" :style="`width: ${kondisi}%`"></div>
                                     </div>
                                 </div>
                             </div>
@@ -126,6 +143,7 @@
                             class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2" @submit="loading = true">
                             @csrf
                             @method('PATCH')
+                            <input type="hidden" name="_form" value="{{ $formKey }}">
 
                             <div class="space-y-3">
                                 <div>
@@ -134,8 +152,13 @@
                                         Serial Number
                                     </label>
                                     <input id="serial_number_{{ $item->id }}" name="serial_number" type="text"
-                                        value="{{ old('serial_number', $item->serial_number) }}" maxlength="100"
+                                        value="{{ $nilaiSerial }}" maxlength="100"
                                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+                                    @if ($isCurrentForm)
+                                        @error('serial_number')
+                                            <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    @endif
                                 </div>
 
                                 <div>
@@ -145,14 +168,19 @@
                                     </label>
                                     <select id="status_{{ $item->id }}" name="status"
                                         class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
-                                        <option value="tersedia" @selected(old('status', $item->status) === 'tersedia')>Tersedia</option>
-                                        <option value="dipinjam" @selected(old('status', $item->status) === 'dipinjam')>Dipinjam</option>
-                                        <option value="rusak" @selected(old('status', $item->status) === 'rusak')>Rusak</option>
-                                        <option value="keluar" @selected(old('status', $item->status) === 'keluar')>Keluar</option>
+                                        <option value="tersedia" @selected($nilaiStatus === 'tersedia')>Tersedia</option>
+                                        <option value="dipinjam" @selected($nilaiStatus === 'dipinjam')>Dipinjam</option>
+                                        <option value="rusak" @selected($nilaiStatus === 'rusak')>Rusak</option>
+                                        <option value="keluar" @selected($nilaiStatus === 'keluar')>Keluar</option>
                                     </select>
                                     <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
                                         Ini adalah status operasional, terpisah dari kondisi fisik.
                                     </p>
+                                    @if ($isCurrentForm)
+                                        @error('status')
+                                            <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    @endif
                                 </div>
 
                                 <div>
@@ -161,7 +189,12 @@
                                         Catatan
                                     </label>
                                     <textarea id="catatan_{{ $item->id }}" name="catatan" rows="3"
-                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ old('catatan', $item->catatan) }}</textarea>
+                                        class="block w-full rounded-md border-gray-300 px-2.5 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">{{ $nilaiCatatan }}</textarea>
+                                    @if ($isCurrentForm)
+                                        @error('catatan')
+                                            <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    @endif
                                 </div>
                             </div>
 
@@ -188,10 +221,16 @@
                                         <span>Baik 80%</span>
                                     </div>
 
-                                    <div x-show="kondisi <= 34" x-transition
+                                    <div x-cloak x-show="kondisi <= 34" x-transition
                                         class="mt-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-2 text-[11px] text-red-600 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-400">
                                         Kondisi ≤34% akan otomatis mengubah status unit menjadi <strong>rusak</strong>.
                                     </div>
+
+                                    @if ($isCurrentForm)
+                                        @error('kondisi')
+                                            <p class="mt-1 text-[11px] text-red-600 dark:text-red-400">{{ $message }}</p>
+                                        @enderror
+                                    @endif
                                 </div>
 
                                 <div

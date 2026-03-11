@@ -6,9 +6,11 @@
 @section('content')
     @php
         $periodeLabel =
-            \Carbon\Carbon::parse($filters['dari'])->format('d M Y') .
-            ' - ' .
-            \Carbon\Carbon::parse($filters['sampai'])->format('d M Y');
+            filled($filters['dari'] ?? null) && filled($filters['sampai'] ?? null)
+                ? \Carbon\Carbon::parse($filters['dari'])->format('d M Y') .
+                    ' - ' .
+                    \Carbon\Carbon::parse($filters['sampai'])->format('d M Y')
+                : 'Semua periode';
     @endphp
 
     <div class="space-y-4">
@@ -50,18 +52,21 @@
                 </div>
 
                 <div class="self-end">
-                    <a href="{{ route('laporan.pdf', ['dari' => $filters['dari'], 'sampai' => $filters['sampai']]) }}"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600"
-                        @click="loadingPdf = true" :class="loadingPdf ? 'opacity-70 pointer-events-none' : ''">
+                    <button type="button"
+                        data-href="{{ route('laporan.pdf', ['dari' => $filters['dari'], 'sampai' => $filters['sampai']]) }}"
+                        @click="loadingPdf = true; window.location.href = $el.dataset.href"
+                        :class="loadingPdf ? 'opacity-70 cursor-not-allowed' : ''" :disabled="loadingPdf"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-600">
                         <span x-show="!loadingPdf" class="inline-flex items-center gap-2">
                             <i class="bi bi-file-pdf"></i>
                             <span>Export PDF</span>
                         </span>
+
                         <span x-show="loadingPdf" class="inline-flex items-center gap-2">
                             <i class="bi bi-arrow-repeat animate-spin-smooth"></i>
                             <span>Menyiapkan PDF...</span>
                         </span>
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -70,7 +75,6 @@
             </p>
         </form>
 
-        {{-- SECTION 1 --}}
         <section class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
@@ -107,31 +111,40 @@
                             <tr>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    #</th>
+                                    #
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Nama</th>
+                                    Nama
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Kategori</th>
+                                    Kategori
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Tipe</th>
+                                    Tipe
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Merek</th>
+                                    Merek
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Lokasi</th>
+                                    Lokasi
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Thn</th>
+                                    Thn
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Kondisi</th>
+                                    Kondisi
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Status</th>
+                                    Status
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -163,25 +176,32 @@
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                        {{ $loop->iteration }}</td>
+                                        {{ $loop->iteration }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:text-gray-100">
-                                        {{ $item->nama }}</td>
+                                        {{ $item->nama }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ $item->kategori?->nama }}</td>
+                                        {{ $item->kategori?->nama }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ ucfirst($item->tipe) }}</td>
+                                        {{ ucfirst($item->tipe) }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ $item->label_merek }}</td>
+                                        {{ $item->label_merek }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ $item->label_lokasi }}</td>
+                                        {{ $item->label_lokasi }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ $item->tahun_pengadaan ?: '—' }}</td>
+                                        {{ $item->tahun_pengadaan ?: '—' }}
+                                    </td>
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                         <x-kondisi-badge :kondisi="$kondisi" :show-value="true" />
                                     </td>
@@ -199,7 +219,6 @@
             @endif
         </section>
 
-        {{-- SECTION 2 --}}
         <section class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
@@ -228,42 +247,62 @@
                             <tr>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Tanggal</th>
+                                    Tanggal
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Jenis</th>
+                                    Jenis
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Barang</th>
+                                    Barang
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Jml</th>
+                                    Jml
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Kondisi</th>
+                                    Kondisi
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Sumber/Tujuan</th>
+                                    Sumber/Tujuan
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Admin</th>
+                                    Admin
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($transaksi as $trx)
+                                @php
+                                    $badgeClass =
+                                        $trx->jenis === 'masuk'
+                                            ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                            : 'bg-gray-100 text-gray-700 ring-gray-400/20 dark:bg-gray-700 dark:text-gray-200';
+                                @endphp
+
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ optional($trx->tanggal_transaksi)->format('d M Y') }}</td>
+                                        {{ optional($trx->tanggal_transaksi)->format('d M Y') }}
+                                    </td>
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
-                                        <x-status-badge :status="$trx->jenis === 'masuk' ? 'aktif' : 'keluar'" />
+                                        <span
+                                            class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ring-1 {{ $badgeClass }}">
+                                            {{ ucfirst($trx->jenis) }}
+                                        </span>
                                     </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:text-gray-100">
-                                        {{ $trx->barang?->nama ?? '-' }}</td>
+                                        {{ $trx->barang?->nama ?? '-' }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ $trx->jumlah }}</td>
+                                        {{ $trx->jumlah }}
+                                    </td>
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                         @if ($trx->kondisi_saat_itu !== null)
                                             <x-kondisi-badge :kondisi="$trx->kondisi_saat_itu" :show-value="true" />
@@ -277,7 +316,8 @@
                                     </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                        {{ $trx->pengguna?->nama ?? '-' }}</td>
+                                        {{ $trx->pengguna?->nama ?? '-' }}
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -289,7 +329,6 @@
             @endif
         </section>
 
-        {{-- SECTION 3 --}}
         <section class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
             <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
@@ -318,22 +357,28 @@
                             <tr>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Tgl Pinjam</th>
+                                    Tgl Pinjam
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Kode</th>
+                                    Kode
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Peminjam</th>
+                                    Peminjam
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Kelas</th>
+                                    Kelas
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Item</th>
+                                    Item
+                                </th>
                                 <th scope="col"
                                     class="border-b border-gray-200 px-3 py-2 text-left text-[11px] uppercase tracking-wider text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                    Status</th>
+                                    Status
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -341,19 +386,24 @@
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
-                                        {{ optional($pinjam->tanggal_pinjam)->format('d M Y') }}</td>
+                                        {{ optional($pinjam->tanggal_pinjam)->format('d M Y') }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 font-mono text-sm text-gray-800 dark:border-gray-700 dark:text-gray-100">
-                                        {{ $pinjam->kode_pinjam }}</td>
+                                        {{ $pinjam->kode_pinjam }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:text-gray-100">
-                                        {{ $pinjam->nama_peminjam }}</td>
+                                        {{ $pinjam->nama_peminjam }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                        {{ $pinjam->kelas?->nama }} / {{ $pinjam->jurusan?->nama }}</td>
+                                        {{ $pinjam->kelas?->nama }} / {{ $pinjam->jurusan?->nama }}
+                                    </td>
                                     <td
                                         class="border-b border-gray-100 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-                                        {{ $pinjam->detail_peminjaman_count }} item</td>
+                                        {{ $pinjam->detail_peminjaman_count }} item
+                                    </td>
                                     <td class="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                         <x-status-badge :status="$pinjam->status" />
                                     </td>

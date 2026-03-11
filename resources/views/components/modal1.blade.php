@@ -1,7 +1,7 @@
 @props(['name', 'title' => null, 'maxWidth' => 'max-w-lg', 'closeOnOverlay' => true])
 
-<div x-cloak x-show="{{ $name }}" class="fixed inset-0 z-[90] overflow-y-auto" aria-modal="true" role="dialog"
-    @keydown.escape.window="{{ $name }} = false">
+<div x-cloak x-show="{{ $name }}" x-transition.opacity.duration.200ms class="fixed inset-0 z-[90] overflow-y-auto"
+    aria-modal="true" role="dialog" @keydown.escape.window="{{ $name }} = false">
     <div class="fixed inset-0 bg-gray-900/60"
         @if ($closeOnOverlay) @click="{{ $name }} = false" @endif></div>
 
@@ -25,7 +25,7 @@
                     </div>
 
                     <button type="button"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
                         @click="{{ $name }} = false" aria-label="Tutup modal" title="Tutup">
                         <i class="bi bi-x-lg text-xs"></i>
                     </button>
